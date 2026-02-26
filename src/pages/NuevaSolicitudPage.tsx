@@ -7,19 +7,19 @@ import logo from "@/assets/logos-faz-plantel.png";
 type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
 
 const APORTACIONES = [
-  { value: 1500, label: "$1,500 MXN" },
-  { value: 1000, label: "$1,000 MXN" },
-  { value: 800, label: "$800 MXN" },
-  { value: 500, label: "$500 MXN" },
-  { value: 300, label: "$300 MXN" },
-];
+{ value: 1500, label: "$1,500 MXN" },
+{ value: 1000, label: "$1,000 MXN" },
+{ value: 800, label: "$800 MXN" },
+{ value: 500, label: "$500 MXN" },
+{ value: 300, label: "$300 MXN" }];
 
-const MOTIVOS: { value: MotivoSolicitud; label: string }[] = [
-  { value: "desempleo", label: "Desempleo" },
-  { value: "separacion", label: "Separación conyugal" },
-  { value: "defuncion", label: "Defunción" },
-  { value: "otro", label: "Otro motivo (caso especial)" },
-];
+
+const MOTIVOS: {value: MotivoSolicitud;label: string;}[] = [
+{ value: "desempleo", label: "Desempleo" },
+{ value: "separacion", label: "Separación conyugal" },
+{ value: "defuncion", label: "Defunción" },
+{ value: "otro", label: "Otro motivo (caso especial)" }];
+
 
 const NIVELES = ["Secundaria", "Bachillerato"];
 const TURNOS = ["Matutino", "Vespertino"];
@@ -48,7 +48,7 @@ export default function NuevaSolicitudPage() {
     motivo: "" as MotivoSolicitud | "",
     motivoDetalle: "",
     tieneAdeudo: false,
-    montoAdeudo: 0,
+    montoAdeudo: 0
   });
 
   const [escritoLibre, setEscritoLibre] = useState<File | null>(null);
@@ -56,28 +56,28 @@ export default function NuevaSolicitudPage() {
   const escritoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
-  const set = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
+  const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const withinWindow = isWithinSubmissionWindow();
 
   const canSubmit =
-    withinWindow &&
-    form.alumnoNombre &&
-    form.matricula &&
-    form.grupo &&
-    form.nivel &&
-    form.turno &&
-    form.tutorNombre &&
-    form.tutorTelefono &&
-    form.tutorEmail &&
-    form.aportacionActual &&
-    form.aportacionPropuesta &&
-    form.motivo &&
-    form.motivoDetalle;
+  withinWindow &&
+  form.alumnoNombre &&
+  form.matricula &&
+  form.grupo &&
+  form.nivel &&
+  form.turno &&
+  form.tutorNombre &&
+  form.tutorTelefono &&
+  form.tutorEmail &&
+  form.aportacionActual &&
+  form.aportacionPropuesta &&
+  form.motivo &&
+  form.motivoDetalle;
 
   const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setDocumentos(prev => [...prev, ...Array.from(e.target.files!)]);
+      setDocumentos((prev) => [...prev, ...Array.from(e.target.files!)]);
     }
     e.target.value = "";
   };
@@ -89,26 +89,26 @@ export default function NuevaSolicitudPage() {
 
     try {
       // Insert solicitud
-      const { data: sol, error: solErr } = await supabase
-        .from("solicitudes")
-        .insert({
-          alumno_nombre: form.alumnoNombre,
-          matricula: form.matricula,
-          grupo: form.grupo,
-          nivel: form.nivel,
-          turno: form.turno,
-          tutor_nombre: form.tutorNombre,
-          tutor_telefono: form.tutorTelefono,
-          tutor_email: form.tutorEmail,
-          aportacion_actual: form.aportacionActual,
-          aportacion_propuesta: form.aportacionPropuesta,
-          motivo: form.motivo,
-          motivo_detalle: form.motivoDetalle,
-          tiene_adeudo: form.tieneAdeudo,
-          monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0,
-        })
-        .select("id")
-        .single();
+      const { data: sol, error: solErr } = await supabase.
+      from("solicitudes").
+      insert({
+        alumno_nombre: form.alumnoNombre,
+        matricula: form.matricula,
+        grupo: form.grupo,
+        nivel: form.nivel,
+        turno: form.turno,
+        tutor_nombre: form.tutorNombre,
+        tutor_telefono: form.tutorTelefono,
+        tutor_email: form.tutorEmail,
+        aportacion_actual: form.aportacionActual,
+        aportacion_propuesta: form.aportacionPropuesta,
+        motivo: form.motivo,
+        motivo_detalle: form.motivoDetalle,
+        tiene_adeudo: form.tieneAdeudo,
+        monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
+      }).
+      select("id").
+      single();
 
       if (solErr) throw new Error(solErr.message);
 
@@ -122,7 +122,7 @@ export default function NuevaSolicitudPage() {
           solicitud_id: solId,
           nombre: escritoLibre.name,
           tipo: "escrito_libre",
-          file_path: path,
+          file_path: path
         });
       }
 
@@ -134,7 +134,7 @@ export default function NuevaSolicitudPage() {
           solicitud_id: solId,
           nombre: doc.name,
           tipo: "comprobatorio",
-          file_path: path,
+          file_path: path
         });
       }
 
@@ -152,8 +152,8 @@ export default function NuevaSolicitudPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center py-20 text-center"
-        >
+          className="flex flex-col items-center justify-center py-20 text-center">
+
           <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
             <CheckCircle size={48} className="text-success" />
           </div>
@@ -168,13 +168,13 @@ export default function NuevaSolicitudPage() {
               setEscritoLibre(null);
               setDocumentos([]);
             }}
-            className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors"
-          >
+            className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
+
             Nueva Solicitud
           </button>
         </motion.div>
-      </PublicLayout>
-    );
+      </PublicLayout>);
+
   }
 
   return (
@@ -184,15 +184,15 @@ export default function NuevaSolicitudPage() {
         <p className="text-muted-foreground mt-1">Complete todos los campos para enviar su solicitud.</p>
       </div>
 
-      {!withinWindow && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+      {!withinWindow &&
+      <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertCircle size={24} className="text-destructive shrink-0 mt-0.5" />
           <div>
             <p className="font-heading font-bold text-destructive">Fuera de periodo de solicitud</p>
             <p className="text-sm text-destructive/80">Las solicitudes solo se pueden enviar los primeros 5 días del mes.</p>
           </div>
         </div>
-      )}
+      }
 
       <div className="space-y-6">
         {/* Student Info */}
@@ -201,24 +201,24 @@ export default function NuevaSolicitudPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="sm:col-span-2 lg:col-span-3">
               <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del alumno</label>
-              <input value={form.alumnoNombre} onChange={e => set("alumnoNombre", e.target.value)}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Nombre completo" />
+              <input value={form.alumnoNombre} onChange={(e) => set("alumnoNombre", e.target.value)}
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Nombre completo" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Matrícula</label>
-              <input value={form.matricula} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 4); set("matricula", v); }}
-                inputMode="numeric" maxLength={4}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Ej: 1234" />
+              <input value={form.matricula} onChange={(e) => {const v = e.target.value.replace(/\D/g, "").slice(0, 4);set("matricula", v);}}
+              inputMode="numeric" maxLength={4}
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Ej: 1234" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Nivel</label>
               <div className="relative">
-                <select value={form.nivel} onChange={e => set("nivel", e.target.value)}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
+                <select value={form.nivel} onChange={(e) => set("nivel", e.target.value)}
+                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
                   <option value="">Seleccione...</option>
-                  {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
+                  {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
@@ -226,20 +226,20 @@ export default function NuevaSolicitudPage() {
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Turno</label>
               <div className="relative">
-                <select value={form.turno} onChange={e => set("turno", e.target.value)}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
+                <select value={form.turno} onChange={(e) => set("turno", e.target.value)}
+                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
                   <option value="">Seleccione...</option>
-                  {TURNOS.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TURNOS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Grupo</label>
-              <input value={form.grupo} onChange={e => set("grupo", e.target.value.slice(0, 4))}
-                maxLength={4}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Ej: 3-A" />
+              <input value={form.grupo} onChange={(e) => set("grupo", e.target.value.slice(0, 4))}
+              maxLength={4}
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Ej: 3-A" />
             </div>
           </div>
         </section>
@@ -250,23 +250,23 @@ export default function NuevaSolicitudPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del tutor</label>
-              <input value={form.tutorNombre} onChange={e => set("tutorNombre", e.target.value)}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Nombre del tutor" />
+              <input value={form.tutorNombre} onChange={(e) => set("tutorNombre", e.target.value)}
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Nombre del tutor" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto</label>
-              <input value={form.tutorTelefono} onChange={e => set("tutorTelefono", e.target.value)}
-                type="tel" inputMode="tel"
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="55 1234 5678" />
+              <input value={form.tutorTelefono} onChange={(e) => set("tutorTelefono", e.target.value)}
+              type="tel" inputMode="tel"
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="55 1234 5678" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Correo electrónico</label>
-              <input value={form.tutorEmail} onChange={e => set("tutorEmail", e.target.value)}
-                type="email"
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="correo@ejemplo.com" />
+              <input value={form.tutorEmail} onChange={(e) => set("tutorEmail", e.target.value)}
+              type="email"
+              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="correo@ejemplo.com" />
             </div>
           </div>
         </section>
@@ -278,10 +278,10 @@ export default function NuevaSolicitudPage() {
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Aportación actual</label>
               <div className="relative">
-                <select value={form.aportacionActual} onChange={e => set("aportacionActual", Number(e.target.value))}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
+                <select value={form.aportacionActual} onChange={(e) => set("aportacionActual", Number(e.target.value))}
+                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
                   <option value={0}>Seleccione...</option>
-                  {APORTACIONES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  {APORTACIONES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
@@ -289,10 +289,10 @@ export default function NuevaSolicitudPage() {
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Aportación solicitada</label>
               <div className="relative">
-                <select value={form.aportacionPropuesta} onChange={e => set("aportacionPropuesta", Number(e.target.value))}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
+                <select value={form.aportacionPropuesta} onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
+                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
                   <option value={0}>Seleccione...</option>
-                  {APORTACIONES.filter(a => a.value < form.aportacionActual || !form.aportacionActual).map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  {APORTACIONES.filter((a) => a.value < form.aportacionActual || !form.aportacionActual).map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
@@ -304,115 +304,115 @@ export default function NuevaSolicitudPage() {
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Adeudo</h3>
           <div className="flex gap-3 mb-4">
-            {[{ v: false, l: "No" }, { v: true, l: "Sí" }].map(opt => (
-              <button key={String(opt.v)} onClick={() => { set("tieneAdeudo", opt.v); if (!opt.v) set("montoAdeudo", 0); }}
-                className={`touch-target flex-1 rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
+            {[{ v: false, l: "No" }, { v: true, l: "Sí" }].map((opt) =>
+            <button key={String(opt.v)} onClick={() => {set("tieneAdeudo", opt.v);if (!opt.v) set("montoAdeudo", 0);}}
+            className={`touch-target flex-1 rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
                   ${form.tieneAdeudo === opt.v ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}>
                 {opt.l}
               </button>
-            ))}
+            )}
           </div>
-          {form.tieneAdeudo && (
-            <div>
+          {form.tieneAdeudo &&
+          <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Monto del adeudo (MXN)</label>
-              <input value={form.montoAdeudo || ""} onChange={e => set("montoAdeudo", Number(e.target.value.replace(/\D/g, "")))}
-                inputMode="numeric"
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="$0" />
+              <input value={form.montoAdeudo || ""} onChange={(e) => set("montoAdeudo", Number(e.target.value.replace(/\D/g, "")))}
+            inputMode="numeric"
+            className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="$0" />
             </div>
-          )}
+          }
         </section>
 
         {/* Reason */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Motivo de la Solicitud</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {MOTIVOS.map(m => {
+            {MOTIVOS.map((m) => {
               const active = form.motivo === m.value;
               return (
                 <button key={m.value} onClick={() => set("motivo", m.value)}
-                  className={`touch-target rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
+                className={`touch-target rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
                     ${active ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}>
                   {m.label}
-                </button>
-              );
+                </button>);
+
             })}
           </div>
           <label className="block text-sm font-semibold text-foreground mb-1">Detalle del motivo</label>
-          <textarea value={form.motivoDetalle} onChange={e => set("motivoDetalle", e.target.value)}
-            rows={3} placeholder="Describa brevemente su situación..."
-            className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+          <textarea value={form.motivoDetalle} onChange={(e) => set("motivoDetalle", e.target.value)}
+          rows={3} placeholder="Describa brevemente su situación..."
+          className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
         </section>
 
         {/* Escrito Libre */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
           <input ref={escritoRef} type="file" accept="image/*,application/pdf" capture="environment" className="hidden"
-            onChange={e => { if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]); e.target.value = ""; }} />
-          {escritoLibre ? (
-            <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+          onChange={(e) => {if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);e.target.value = "";}} />
+          {escritoLibre ?
+          <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
               <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
               <button onClick={() => setEscritoLibre(null)} className="text-destructive"><X size={20} /></button>
-            </div>
-          ) : (
-            <button onClick={() => escritoRef.current?.click()}
-              className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+            </div> :
+
+          <button onClick={() => escritoRef.current?.click()}
+          className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
               <Camera size={36} className="text-muted-foreground mb-2" />
               <p className="font-heading font-semibold text-foreground">Toque para capturar o adjuntar escrito libre</p>
               <p className="text-sm text-muted-foreground mt-1">Puede tomar foto con la cámara del iPad o seleccionar archivo</p>
             </button>
-          )}
+          }
         </section>
 
         {/* Documents */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Documentos Comprobatorios</h3>
           <input ref={docRef} type="file" accept="image/*,application/pdf" capture="environment" multiple className="hidden"
-            onChange={handleDocAdd} />
+          onChange={handleDocAdd} />
           <button onClick={() => docRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer mb-4">
+          className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer mb-4">
             <Upload size={36} className="text-muted-foreground mb-2" />
             <p className="font-heading font-semibold text-foreground">Toque para adjuntar documentos</p>
             <p className="text-sm text-muted-foreground mt-1">Identificación oficial, comprobantes, constancias — puede usar la cámara</p>
           </button>
-          {documentos.length > 0 && (
-            <div className="space-y-2">
-              {documentos.map((d, i) => (
-                <div key={i} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+          {documentos.length > 0 &&
+          <div className="space-y-2">
+              {documentos.map((d, i) =>
+            <div key={i} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
                   <span className="text-foreground flex-1 truncate">{d.name}</span>
-                  <button onClick={() => setDocumentos(prev => prev.filter((_, j) => j !== i))} className="text-destructive"><X size={20} /></button>
+                  <button onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))} className="text-destructive"><X size={20} /></button>
                 </div>
-              ))}
+            )}
             </div>
-          )}
+          }
         </section>
 
-        {submitError && (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
+        {submitError &&
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
             {submitError}
           </div>
-        )}
+        }
 
         {/* Submit */}
         <button
           onClick={handleSubmit}
           disabled={!canSubmit || submitting}
           className={`touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg
-            ${canSubmit && !submitting ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}
-        >
+            ${canSubmit && !submitting ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}>
+
           {submitting ? "Enviando..." : "Enviar Solicitud"}
         </button>
       </div>
-    </PublicLayout>
-  );
+    </PublicLayout>);
+
 }
 
-function PublicLayout({ children }: { children: React.ReactNode }) {
+function PublicLayout({ children }: {children: React.ReactNode;}) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-4">
-          <img src={logo} alt="Fundación Azteca / Plantel Azteca" className="h-10 w-auto" />
+          <img alt="Fundación Azteca / Plantel Azteca" className="h-10 w-auto" src="/lovable-uploads/d5f2960e-fcb4-4f84-8f75-87b3eb1c6074.png" />
           <div>
             <h1 className="font-heading text-lg font-bold leading-tight">Plantel Azteca CDMX</h1>
             <p className="text-sm opacity-80">Gestión de Aportaciones</p>
@@ -428,6 +428,6 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
       <footer className="bg-muted text-muted-foreground text-center text-xs py-3 font-body">
         © 2026 Fundación Azteca de Grupo Salinas — Plantel Azteca CDMX
       </footer>
-    </div>
-  );
+    </div>);
+
 }
