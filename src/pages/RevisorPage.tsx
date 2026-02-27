@@ -17,6 +17,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function RevisorPage() {
   const { user } = useAuth();
+  const isAuditor = user?.role === "auditor";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -27,7 +28,9 @@ export default function RevisorPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await fetchSolicitudes(["pendiente_revision", "en_revision"]);
+      const data = isAuditor
+        ? await fetchSolicitudes(["pendiente_revision", "en_revision", "enviada_enlace", "rechazada"])
+        : await fetchSolicitudes(["pendiente_revision", "en_revision"]);
       setSolicitudes(data);
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -38,10 +41,12 @@ export default function RevisorPage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      markPrimeraLectura(selected.id, "revisor_primera_lectura");
-      if (selected.status === "pendiente_revision") {
-        updateSolicitudStatus(selected.id, "en_revision", { fecha_validacion: null })
-          .then(load).catch(console.error);
+      if (!isAuditor) {
+        markPrimeraLectura(selected.id, "revisor_primera_lectura");
+        if (selected.status === "pendiente_revision") {
+          updateSolicitudStatus(selected.id, "en_revision", { fecha_validacion: null })
+            .then(load).catch(console.error);
+        }
       }
     }
   }, [selected?.id]);
@@ -173,24 +178,34 @@ export default function RevisorPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-muted-foreground font-semibold mb-1">Comentarios del revisor:</label>
-                    <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
-                      rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                      placeholder="Observaciones sobre la documentación..." />
-                  </div>
+                  {!isAuditor && (
+                    <div>
+                      <label className="block text-muted-foreground font-semibold mb-1">Comentarios del revisor:</label>
+                      <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
+                        rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                        placeholder="Observaciones sobre la documentación..." />
+                    </div>
+                  )}
+                  {selected.comentarios_revisor && isAuditor && (
+                    <div className="bg-accent/10 rounded-lg p-3">
+                      <p className="text-muted-foreground font-semibold mb-1">Nota del revisor:</p>
+                      <p className="text-foreground">{selected.comentarios_revisor}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex gap-3 mt-6">
-                  <button onClick={handleReject} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
-                    <XCircle size={20} /> Rechazar
-                  </button>
-                  <button onClick={handleSendToEnlace} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors shadow-lg">
-                    <Send size={20} /> Enviar a Enlace
-                  </button>
-                </div>
+                {!isAuditor && (
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={handleReject} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
+                      <XCircle size={20} /> Rechazar
+                    </button>
+                    <button onClick={handleSendToEnlace} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors shadow-lg">
+                      <Send size={20} /> Enviar a Enlace
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

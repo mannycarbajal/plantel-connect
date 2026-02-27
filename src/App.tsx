@@ -46,10 +46,10 @@ function AppRoutes() {
         isAuthenticated && user ? <Navigate to={ROLE_HOME[user.role] ?? "/"} replace /> : <LoginPage />
       } />
 
-      <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor"]}><RevisorPage /></ProtectedRoute>} />
-      <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace"]}><EnlacePage /></ProtectedRoute>} />
-      <Route path="/direccion/panel" element={<ProtectedRoute allowedRoles={["direccion"]}><DireccionPage /></ProtectedRoute>} />
-      <Route path="/comite/panel" element={<ProtectedRoute allowedRoles={["comite"]}><ComitePage /></ProtectedRoute>} />
+      <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor", "auditor"]}><RevisorPage /></ProtectedRoute>} />
+      <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace", "auditor"]}><EnlacePage /></ProtectedRoute>} />
+      <Route path="/direccion/panel" element={<ProtectedRoute allowedRoles={["direccion", "auditor"]}><DireccionPage /></ProtectedRoute>} />
+      <Route path="/comite/panel" element={<ProtectedRoute allowedRoles={["comite", "auditor"]}><ComitePage /></ProtectedRoute>} />
       <Route path="/auditor/panel" element={<ProtectedRoute allowedRoles={["auditor"]}><AuditorPage /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />

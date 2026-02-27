@@ -16,6 +16,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function DireccionPage() {
   const { user } = useAuth();
+  const isAuditor = user?.role === "auditor";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -38,7 +39,7 @@ export default function DireccionPage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      markPrimeraLectura(selected.id, "direccion_primera_lectura");
+      if (!isAuditor) markPrimeraLectura(selected.id, "direccion_primera_lectura");
     }
   }, [selected?.id]);
 
@@ -184,7 +185,7 @@ export default function DireccionPage() {
                     </div>
                   </div>
 
-                  {selected.status === "enviada_direccion" && (
+                  {selected.status === "enviada_direccion" && !isAuditor && (
                     <>
                       <div>
                         <label className="block text-muted-foreground font-semibold mb-1">Resolución / Comentarios:</label>
