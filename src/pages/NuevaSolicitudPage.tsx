@@ -385,26 +385,15 @@ export default function NuevaSolicitudPage() {
             Documentos Comprobatorios
             {documentos.length > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">({documentos.length} archivo{documentos.length !== 1 ? "s" : ""})</span>}
           </h3>
-          <input ref={docRef} type="file" accept="image/*,application/pdf" className="hidden"
+          <input ref={docRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
           onChange={handleDocAdd} />
           <div className="flex gap-3">
             <button onClick={() => {
               const input = docRef.current;
               if (!input) return;
               input.setAttribute("capture", "environment");
-              input.removeAttribute("multiple");
               input.click();
-            }}
-            className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
-              <Camera size={36} className="text-muted-foreground mb-2" />
-              <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
-            </button>
-            <button onClick={() => {
-              const input = docRef.current;
-              if (!input) return;
               input.removeAttribute("capture");
-              input.setAttribute("multiple", "true");
-              input.click();
             }}
             className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
               <FileUp size={36} className="text-muted-foreground mb-2" />
