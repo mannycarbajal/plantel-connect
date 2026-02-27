@@ -27,7 +27,12 @@ const TURNOS = ["Matutino", "Vespertino"];
 
 function isWithinSubmissionWindow(): boolean {
   const today = new Date();
-  return today.getDate() <= 5;
+  // Temporary override: allow Feb 27-28, 2026
+  const y = today.getFullYear();
+  const m = today.getMonth(); // 0-indexed, Feb = 1
+  const d = today.getDate();
+  if (y === 2026 && m === 1 && (d === 27 || d === 28)) return true;
+  return d <= 5;
 }
 
 export default function NuevaSolicitudPage() {
