@@ -4,7 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircle, FileText, Send, ExternalLink, Loader2 } from "lucide-react";
-import { fetchSolicitudesForEnlace, fetchDocumentos, getDocumentUrl, updateSolicitudStatus, type SolicitudRow, type DocumentoRow } from "@/lib/solicitudes";
+import { fetchSolicitudes, fetchSolicitudesForEnlace, fetchDocumentos, getDocumentUrl, updateSolicitudStatus, type SolicitudRow, type DocumentoRow } from "@/lib/solicitudes";
 import { logAuditEvent, markPrimeraLectura } from "@/lib/audit";
 
 const MOTIVO_LABELS: Record<string, string> = {
@@ -16,6 +16,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function EnlacePage() {
   const { user } = useAuth();
+  const isAuditor = user?.role === "auditor";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -27,7 +28,9 @@ export default function EnlacePage() {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await fetchSolicitudesForEnlace(user.id);
+      const data = isAuditor
+        ? await fetchSolicitudes(["enviada_enlace"])
+        : await fetchSolicitudesForEnlace(user.id);
       setSolicitudes(data);
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -38,7 +41,7 @@ export default function EnlacePage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      markPrimeraLectura(selected.id, "enlace_primera_lectura");
+      if (!isAuditor) markPrimeraLectura(selected.id, "enlace_primera_lectura");
     }
   }, [selected?.id]);
 
@@ -156,24 +159,34 @@ export default function EnlacePage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-muted-foreground font-semibold mb-1">Comentarios del enlace:</label>
-                    <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
-                      rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                      placeholder="Observaciones del enlace..." />
-                  </div>
+                  {!isAuditor && (
+                    <div>
+                      <label className="block text-muted-foreground font-semibold mb-1">Comentarios del enlace:</label>
+                      <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
+                        rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                        placeholder="Observaciones del enlace..." />
+                    </div>
+                  )}
+                  {selected.comentarios_enlace && isAuditor && (
+                    <div className="bg-accent/10 rounded-lg p-3">
+                      <p className="text-muted-foreground font-semibold mb-1">Nota del enlace:</p>
+                      <p className="text-foreground">{selected.comentarios_enlace}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex gap-3 mt-6">
-                  <button onClick={handleReject} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
-                    <XCircle size={20} /> Rechazar
-                  </button>
-                  <button onClick={handleSendToDireccion} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors shadow-lg">
-                    <Send size={20} /> Enviar a Dirección
-                  </button>
-                </div>
+                {!isAuditor && (
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={handleReject} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
+                      <XCircle size={20} /> Rechazar
+                    </button>
+                    <button onClick={handleSendToDireccion} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors shadow-lg">
+                      <Send size={20} /> Enviar a Dirección
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

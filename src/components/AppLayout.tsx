@@ -26,7 +26,11 @@ const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.Elemen
   { path: "/comite/panel", label: "Casos para Comité", icon: Users }],
 
   auditor: [
-  { path: "/auditor/panel", label: "Panel de Auditoría", icon: Eye }]
+  { path: "/auditor/panel", label: "Panel de Auditoría", icon: Eye },
+  { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
+  { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
+  { path: "/direccion/panel", label: "Vista Dirección", icon: ShieldCheck },
+  { path: "/comite/panel", label: "Vista Comité", icon: Users }]
 
 };
 export default function AppLayout({ children }: {children: React.ReactNode;}) {

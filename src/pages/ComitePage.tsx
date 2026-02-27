@@ -16,6 +16,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function ComitePage() {
   const { user } = useAuth();
+  const isAuditor = user?.role === "auditor";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -37,7 +38,7 @@ export default function ComitePage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      markPrimeraLectura(selected.id, "comite_primera_lectura");
+      if (!isAuditor) markPrimeraLectura(selected.id, "comite_primera_lectura");
     }
   }, [selected?.id]);
 
@@ -165,24 +166,30 @@ export default function ComitePage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-muted-foreground font-semibold mb-1">Resolución del Comité:</label>
-                    <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
-                      rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                      placeholder="Fundamento de la resolución del Comité..." />
-                  </div>
+                  {!isAuditor && (
+                    <>
+                      <div>
+                        <label className="block text-muted-foreground font-semibold mb-1">Resolución del Comité:</label>
+                        <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
+                          rows={3} className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                          placeholder="Fundamento de la resolución del Comité..." />
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div className="flex gap-3 mt-6">
-                  <button onClick={() => handleAction("rechazada")} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
-                    <XCircle size={20} /> Rechazar
-                  </button>
-                  <button onClick={() => handleAction("aprobada")} disabled={acting}
-                    className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-success text-success-foreground font-heading font-semibold hover:bg-success/90 transition-colors shadow-lg">
-                    <CheckCircle size={20} /> Aprobar
-                  </button>
-                </div>
+                {!isAuditor && (
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => handleAction("rechazada")} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
+                      <XCircle size={20} /> Rechazar
+                    </button>
+                    <button onClick={() => handleAction("aprobada")} disabled={acting}
+                      className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-success text-success-foreground font-heading font-semibold hover:bg-success/90 transition-colors shadow-lg">
+                      <CheckCircle size={20} /> Aprobar
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
