@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users } from "lucide-react";
+import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users, Eye } from "lucide-react";
 import logo from "@/assets/logos-faz-plantel.png";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -9,6 +9,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   enlace: "Enlace de Nivel",
   direccion: "Dirección Operativa",
   comite: "Comité",
+  auditor: "Auditor",
 };
 
 const NAV_ITEMS: Record<UserRole, { path: string; label: string; icon: React.ElementType }[]> = {
@@ -24,8 +25,10 @@ const NAV_ITEMS: Record<UserRole, { path: string; label: string; icon: React.Ele
   comite: [
     { path: "/comite/panel", label: "Casos para Comité", icon: Users },
   ],
+  auditor: [
+    { path: "/auditor/panel", label: "Panel de Auditoría", icon: Eye },
+  ],
 };
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();

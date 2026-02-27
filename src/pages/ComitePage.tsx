@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, FileText, Download, ExternalLink, Loader2 } from "lucide-react";
 import { fetchSolicitudes, fetchDocumentos, getDocumentUrl, updateSolicitudStatus, type SolicitudRow, type DocumentoRow } from "@/lib/solicitudes";
+import { logAuditEvent, markPrimeraLectura } from "@/lib/audit";
 
 const MOTIVO_LABELS: Record<string, string> = {
   desempleo: "Desempleo",
@@ -13,6 +15,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 };
 
 export default function ComitePage() {
+  const { user } = useAuth();
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -32,7 +35,10 @@ export default function ComitePage() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (selected) fetchDocumentos(selected.id).then(setDocs).catch(console.error);
+    if (selected) {
+      fetchDocumentos(selected.id).then(setDocs).catch(console.error);
+      markPrimeraLectura(selected.id, "comite_primera_lectura");
+    }
   }, [selected?.id]);
 
   const handleAction = async (action: "aprobada" | "rechazada") => {
@@ -43,6 +49,7 @@ export default function ComitePage() {
         comentarios_direccion: comentarios || `Resuelto por Comité: ${action}.`,
         fecha_resolucion: new Date().toISOString(),
       });
+      await logAuditEvent(selected.id, `${action}_comite`, user?.email, "comite");
       setSelected(null);
       setComentarios("");
       await load();

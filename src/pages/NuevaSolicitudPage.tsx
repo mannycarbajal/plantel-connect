@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle } from "lucide-react";
+import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp } from "lucide-react";
+import { logAuditEvent } from "@/lib/audit";
 import logo from "@/assets/logos-faz-plantel.png";
 
 type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
@@ -138,6 +139,9 @@ export default function NuevaSolicitudPage() {
         });
       }
 
+      // Audit trail
+      await logAuditEvent(solId, "solicitud_creada", form.tutorEmail, "solicitante");
+
       setSubmitted(true);
     } catch (err: any) {
       setSubmitError(err.message || "Error al enviar la solicitud.");
@@ -206,11 +210,11 @@ export default function NuevaSolicitudPage() {
               placeholder="Nombre completo" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Matrícula</label>
-              <input value={form.matricula} onChange={(e) => {const v = e.target.value.replace(/\D/g, "").slice(0, 4);set("matricula", v);}}
-              inputMode="numeric" maxLength={4}
+              <label className="block text-sm font-semibold text-foreground mb-1">Matrícula (8 dígitos)</label>
+              <input value={form.matricula} onChange={(e) => {const v = e.target.value.replace(/\D/g, "").slice(0, 8);set("matricula", v);}}
+              inputMode="numeric" maxLength={8}
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Ej: 1234" />
+              placeholder="Ej: 29123456" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Nivel</label>
@@ -235,11 +239,11 @@ export default function NuevaSolicitudPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Grupo</label>
-              <input value={form.grupo} onChange={(e) => set("grupo", e.target.value.slice(0, 4))}
-              maxLength={4}
+              <label className="block text-sm font-semibold text-foreground mb-1">Grupo (3-4 dígitos)</label>
+              <input value={form.grupo} onChange={(e) => {const v = e.target.value.replace(/\D/g, "").slice(0, 4);set("grupo", v);}}
+              inputMode="numeric" maxLength={4}
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Ej: 3-A" />
+              placeholder="Ej: 123" />
             </div>
           </div>
         </section>
@@ -347,7 +351,7 @@ export default function NuevaSolicitudPage() {
         {/* Escrito Libre */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
-          <input ref={escritoRef} type="file" accept="image/*,application/pdf" capture="environment" className="hidden"
+          <input ref={escritoRef} type="file" accept="image/*,application/pdf" className="hidden"
           onChange={(e) => {if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);e.target.value = "";}} />
           {escritoLibre ?
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
@@ -355,26 +359,39 @@ export default function NuevaSolicitudPage() {
               <button onClick={() => setEscritoLibre(null)} className="text-destructive"><X size={20} /></button>
             </div> :
 
-          <button onClick={() => escritoRef.current?.click()}
-          className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-              <Camera size={36} className="text-muted-foreground mb-2" />
-              <p className="font-heading font-semibold text-foreground">Toque para capturar o adjuntar escrito libre</p>
-              <p className="text-sm text-muted-foreground mt-1">Puede tomar foto con la cámara del iPad o seleccionar archivo</p>
-            </button>
+          <div className="flex gap-3">
+              <button onClick={() => { escritoRef.current?.setAttribute("capture", "environment"); escritoRef.current?.click(); }}
+              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+                <Camera size={36} className="text-muted-foreground mb-2" />
+                <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
+              </button>
+              <button onClick={() => { escritoRef.current?.removeAttribute("capture"); escritoRef.current?.click(); }}
+              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+                <FileUp size={36} className="text-muted-foreground mb-2" />
+                <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
+              </button>
+            </div>
           }
         </section>
 
         {/* Documents */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Documentos Comprobatorios</h3>
-          <input ref={docRef} type="file" accept="image/*,application/pdf" capture="environment" multiple className="hidden"
+          <input ref={docRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
           onChange={handleDocAdd} />
-          <button onClick={() => docRef.current?.click()}
-          className="w-full border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer mb-4">
-            <Upload size={36} className="text-muted-foreground mb-2" />
-            <p className="font-heading font-semibold text-foreground">Toque para adjuntar documentos</p>
-            <p className="text-sm text-muted-foreground mt-1">Identificación oficial, comprobantes, constancias — puede usar la cámara</p>
-          </button>
+          <div className="flex gap-3 mb-4">
+            <button onClick={() => { docRef.current?.setAttribute("capture", "environment"); docRef.current?.removeAttribute("multiple"); docRef.current?.click(); }}
+            className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
+              <Camera size={36} className="text-muted-foreground mb-2" />
+              <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
+            </button>
+            <button onClick={() => { docRef.current?.removeAttribute("capture"); docRef.current?.setAttribute("multiple", "true"); docRef.current?.click(); }}
+            className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
+              <FileUp size={36} className="text-muted-foreground mb-2" />
+              <p className="font-heading font-semibold text-foreground">Cargar Archivos</p>
+              <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
+            </button>
+          </div>
           {documentos.length > 0 &&
           <div className="space-y-2">
               {documentos.map((d, i) =>

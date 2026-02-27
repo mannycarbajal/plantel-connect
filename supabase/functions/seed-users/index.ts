@@ -18,6 +18,7 @@ const USERS: UserSeed[] = [
   { email: "maria.lopez@fundacionazteca.org", password: "Lopez@2025!", role: "enlace" },
   { email: "juan.sanchez@fundacionazteca.org", password: "S@nchez2025!", role: "direccion" },
   { email: "coral.perez@fundacionazteca.org", password: "Perez@2025!", role: "comite" },
+  { email: "manuel.carbajal@fundacionazteca.org", password: "C@rbajal2025!", role: "auditor" },
 ];
 
 Deno.serve(async (req) => {
