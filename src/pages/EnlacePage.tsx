@@ -5,6 +5,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircle, FileText, Send, ExternalLink, Loader2 } from "lucide-react";
 import { fetchSolicitudesForEnlace, fetchDocumentos, getDocumentUrl, updateSolicitudStatus, type SolicitudRow, type DocumentoRow } from "@/lib/solicitudes";
+import { logAuditEvent, markPrimeraLectura } from "@/lib/audit";
 
 const MOTIVO_LABELS: Record<string, string> = {
   desempleo: "Desempleo",
@@ -35,7 +36,10 @@ export default function EnlacePage() {
   useEffect(() => { load(); }, [user?.id]);
 
   useEffect(() => {
-    if (selected) fetchDocumentos(selected.id).then(setDocs).catch(console.error);
+    if (selected) {
+      fetchDocumentos(selected.id).then(setDocs).catch(console.error);
+      markPrimeraLectura(selected.id, "enlace_primera_lectura");
+    }
   }, [selected?.id]);
 
   const handleSendToDireccion = async () => {
@@ -46,6 +50,7 @@ export default function EnlacePage() {
         comentarios_enlace: comentarios || "Revisado por enlace de nivel.",
         fecha_enlace: new Date().toISOString(),
       });
+      await logAuditEvent(selected.id, "enviada_direccion", user?.email, "enlace");
       setSelected(null);
       setComentarios("");
       await load();
@@ -62,6 +67,7 @@ export default function EnlacePage() {
         fecha_enlace: new Date().toISOString(),
         fecha_resolucion: new Date().toISOString(),
       });
+      await logAuditEvent(selected.id, "rechazada_enlace", user?.email, "enlace");
       setSelected(null);
       setComentarios("");
       await load();

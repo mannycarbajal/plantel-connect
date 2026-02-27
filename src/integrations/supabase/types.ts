@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_trail: {
+        Row: {
+          action: string
+          created_at: string
+          device_name: string | null
+          id: string
+          ip_address: string | null
+          solicitud_id: string
+          user_email: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          solicitud_id: string
+          user_email?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          solicitud_id?: string
+          user_email?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_trail_solicitud_id_fkey"
+            columns: ["solicitud_id"]
+            isOneToOne: false
+            referencedRelation: "solicitudes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos: {
         Row: {
           file_path: string
@@ -57,8 +98,11 @@ export type Database = {
           comentarios_direccion: string | null
           comentarios_enlace: string | null
           comentarios_revisor: string | null
+          comite_primera_lectura: string | null
           created_at: string
+          direccion_primera_lectura: string | null
           enlace_asignado: string | null
+          enlace_primera_lectura: string | null
           fecha_direccion: string | null
           fecha_enlace: string | null
           fecha_recepcion: string | null
@@ -72,6 +116,7 @@ export type Database = {
           motivo: string
           motivo_detalle: string
           nivel: string
+          revisor_primera_lectura: string | null
           status: string
           tiene_adeudo: boolean
           turno: string
@@ -87,8 +132,11 @@ export type Database = {
           comentarios_direccion?: string | null
           comentarios_enlace?: string | null
           comentarios_revisor?: string | null
+          comite_primera_lectura?: string | null
           created_at?: string
+          direccion_primera_lectura?: string | null
           enlace_asignado?: string | null
+          enlace_primera_lectura?: string | null
           fecha_direccion?: string | null
           fecha_enlace?: string | null
           fecha_recepcion?: string | null
@@ -102,6 +150,7 @@ export type Database = {
           motivo: string
           motivo_detalle: string
           nivel: string
+          revisor_primera_lectura?: string | null
           status?: string
           tiene_adeudo?: boolean
           turno: string
@@ -117,8 +166,11 @@ export type Database = {
           comentarios_direccion?: string | null
           comentarios_enlace?: string | null
           comentarios_revisor?: string | null
+          comite_primera_lectura?: string | null
           created_at?: string
+          direccion_primera_lectura?: string | null
           enlace_asignado?: string | null
+          enlace_primera_lectura?: string | null
           fecha_direccion?: string | null
           fecha_enlace?: string | null
           fecha_recepcion?: string | null
@@ -132,6 +184,7 @@ export type Database = {
           motivo?: string
           motivo_detalle?: string
           nivel?: string
+          revisor_primera_lectura?: string | null
           status?: string
           tiene_adeudo?: boolean
           turno?: string
@@ -174,7 +227,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "revisor" | "enlace" | "direccion" | "comite"
+      app_role: "revisor" | "enlace" | "direccion" | "comite" | "auditor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -302,7 +355,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["revisor", "enlace", "direccion", "comite"],
+      app_role: ["revisor", "enlace", "direccion", "comite", "auditor"],
     },
   },
 } as const

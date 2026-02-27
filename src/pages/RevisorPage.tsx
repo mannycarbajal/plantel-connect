@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { XCircle, FileText, Send, ExternalLink, Loader2 } from "lucide-react";
 import { fetchSolicitudes, fetchDocumentos, getDocumentUrl, updateSolicitudStatus, type SolicitudRow, type DocumentoRow } from "@/lib/solicitudes";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent, markPrimeraLectura } from "@/lib/audit";
 
 const MOTIVO_LABELS: Record<string, string> = {
   desempleo: "Desempleo",
@@ -37,7 +38,7 @@ export default function RevisorPage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      // Mark as en_revision if pending
+      markPrimeraLectura(selected.id, "revisor_primera_lectura");
       if (selected.status === "pendiente_revision") {
         updateSolicitudStatus(selected.id, "en_revision", { fecha_validacion: null })
           .then(load).catch(console.error);
@@ -59,6 +60,7 @@ export default function RevisorPage() {
         fecha_validacion: new Date().toISOString(),
         enlace_asignado: enlaceData?.user_id ?? null,
       });
+      await logAuditEvent(selected.id, "enviada_enlace", user?.email, "revisor");
       setSelected(null);
       setComentarios("");
       await load();
@@ -75,6 +77,7 @@ export default function RevisorPage() {
         fecha_validacion: new Date().toISOString(),
         fecha_resolucion: new Date().toISOString(),
       });
+      await logAuditEvent(selected.id, "rechazada_revisor", user?.email, "revisor");
       setSelected(null);
       setComentarios("");
       await load();
