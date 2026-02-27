@@ -376,32 +376,49 @@ export default function NuevaSolicitudPage() {
 
         {/* Documents */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Documentos Comprobatorios</h3>
-          <input ref={docRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
+          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+            Documentos Comprobatorios
+            {documentos.length > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">({documentos.length} archivo{documentos.length !== 1 ? "s" : ""})</span>}
+          </h3>
+          <input ref={docRef} type="file" accept="image/*,application/pdf" className="hidden"
           onChange={handleDocAdd} />
-          <div className="flex gap-3 mb-4">
-            <button onClick={() => { docRef.current?.setAttribute("capture", "environment"); docRef.current?.removeAttribute("multiple"); docRef.current?.click(); }}
+          <div className="flex gap-3">
+            <button onClick={() => {
+              const input = docRef.current;
+              if (!input) return;
+              input.setAttribute("capture", "environment");
+              input.removeAttribute("multiple");
+              input.click();
+            }}
             className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
               <Camera size={36} className="text-muted-foreground mb-2" />
               <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
             </button>
-            <button onClick={() => { docRef.current?.removeAttribute("capture"); docRef.current?.setAttribute("multiple", "true"); docRef.current?.click(); }}
+            <button onClick={() => {
+              const input = docRef.current;
+              if (!input) return;
+              input.removeAttribute("capture");
+              input.setAttribute("multiple", "true");
+              input.click();
+            }}
             className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
               <FileUp size={36} className="text-muted-foreground mb-2" />
               <p className="font-heading font-semibold text-foreground">Cargar Archivos</p>
               <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
             </button>
           </div>
-          {documentos.length > 0 &&
-          <div className="space-y-2">
-              {documentos.map((d, i) =>
-            <div key={i} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-                  <span className="text-foreground flex-1 truncate">{d.name}</span>
-                  <button onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))} className="text-destructive"><X size={20} /></button>
+          {documentos.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {documentos.map((d, i) => (
+                <div key={`${d.name}-${d.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+                  <Upload size={16} className="text-muted-foreground shrink-0" />
+                  <span className="text-foreground flex-1 truncate text-sm">{d.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{(d.size / 1024).toFixed(0)} KB</span>
+                  <button onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))} className="text-destructive shrink-0"><X size={20} /></button>
                 </div>
-            )}
+              ))}
             </div>
-          }
+          )}
         </section>
 
         {submitError &&
