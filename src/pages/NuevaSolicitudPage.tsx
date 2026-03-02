@@ -77,7 +77,8 @@ export default function NuevaSolicitudPage() {
   form.aportacionActual &&
   form.aportacionPropuesta >= 0 &&
   form.motivo &&
-  form.motivoDetalle;
+  form.motivoDetalle &&
+  escritoLibre;
 
 
   const handleSubmit = async () => {
@@ -337,7 +338,8 @@ export default function NuevaSolicitudPage() {
 
         {/* Escrito Libre */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
+          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre y Documentos Probatorios</h3>
+          <p className="text-sm text-muted-foreground mb-3">Obligatorio. Suba una foto o archivo PDF con su escrito libre y documentos que respalden su solicitud.</p>
           <input ref={escritoRef} type="file" accept="image/*,application/pdf" className="hidden"
           onChange={(e) => {if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);e.target.value = "";}} />
           {escritoLibre ?
