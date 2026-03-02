@@ -336,30 +336,24 @@ export default function NuevaSolicitudPage() {
           className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
         </section>
 
-        {/* Escrito Libre */}
+        {/* Escrito Libre y Documentos */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre y Documentos Probatorios</h3>
-          <p className="text-sm text-muted-foreground mb-3">Obligatorio. Suba una foto o archivo PDF con su escrito libre y documentos que respalden su solicitud.</p>
-          <input ref={escritoRef} type="file" accept="image/*,application/pdf" className="hidden"
+          <p className="text-sm text-muted-foreground mb-3">Obligatorio. Suba fotos, archivos PDF o cualquier documento que respalde su solicitud.</p>
+          <input ref={escritoRef} type="file" accept="image/*,application/pdf,.doc,.docx" className="hidden"
           onChange={(e) => {if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);e.target.value = "";}} />
           {escritoLibre ?
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+              <FileUp size={20} className="text-primary shrink-0" />
               <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
               <button onClick={() => setEscritoLibre(null)} className="text-destructive"><X size={20} /></button>
             </div> :
-
-          <div className="flex gap-3">
-              <button onClick={() => { escritoRef.current?.setAttribute("capture", "environment"); escritoRef.current?.click(); }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-                <Camera size={36} className="text-muted-foreground mb-2" />
-                <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
-              </button>
-              <button onClick={() => { escritoRef.current?.removeAttribute("capture"); escritoRef.current?.click(); }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-                <FileUp size={36} className="text-muted-foreground mb-2" />
-                <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
-              </button>
-            </div>
+          <button onClick={() => { escritoRef.current?.removeAttribute("capture"); escritoRef.current?.click(); }}
+            className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+              <Upload size={40} className="text-muted-foreground mb-3" />
+              <p className="font-heading font-semibold text-foreground">Cargar Documento</p>
+              <p className="text-sm text-muted-foreground mt-1">Fotos, PDF o archivos</p>
+            </button>
           }
         </section>
 
