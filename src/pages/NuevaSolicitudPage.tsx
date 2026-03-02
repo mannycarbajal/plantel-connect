@@ -50,7 +50,7 @@ export default function NuevaSolicitudPage() {
     tutorTelefono: "",
     tutorEmail: "",
     aportacionActual: 0,
-    aportacionPropuesta: 0,
+    aportacionPropuesta: -1,
     motivo: "" as MotivoSolicitud | "",
     motivoDetalle: "",
     tieneAdeudo: false,
@@ -77,7 +77,7 @@ export default function NuevaSolicitudPage() {
   form.tutorTelefono &&
   form.tutorEmail &&
   form.aportacionActual &&
-  form.aportacionPropuesta &&
+  form.aportacionPropuesta >= 0 &&
   form.motivo &&
   form.motivoDetalle;
 
@@ -173,7 +173,7 @@ export default function NuevaSolicitudPage() {
           <button
             onClick={() => {
               setSubmitted(false);
-              setForm({ alumnoNombre: "", matricula: "", grupo: "", nivel: "", turno: "", tutorNombre: "", tutorTelefono: "", tutorEmail: "", aportacionActual: 0, aportacionPropuesta: 0, motivo: "", motivoDetalle: "", tieneAdeudo: false, montoAdeudo: 0 });
+              setForm({ alumnoNombre: "", matricula: "", grupo: "", nivel: "", turno: "", tutorNombre: "", tutorTelefono: "", tutorEmail: "", aportacionActual: 0, aportacionPropuesta: -1, motivo: "", motivoDetalle: "", tieneAdeudo: false, montoAdeudo: 0 });
               setEscritoLibre(null);
               setDocumentos([]);
             }}
@@ -300,8 +300,9 @@ export default function NuevaSolicitudPage() {
               <div className="relative">
                 <select value={form.aportacionPropuesta} onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option value={0}>Seleccione...</option>
+                  <option value={-1}>Seleccione...</option>
                   {APORTACIONES.filter((a) => a.value < form.aportacionActual || !form.aportacionActual).map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  {form.aportacionActual > 0 && <option value={0}>$0.00 MXN</option>}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
