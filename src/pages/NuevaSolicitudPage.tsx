@@ -50,7 +50,7 @@ export default function NuevaSolicitudPage() {
     tutorTelefono: "",
     tutorEmail: "",
     aportacionActual: 0,
-    aportacionPropuesta: -1,
+    aportacionPropuesta: 0,
     motivo: "" as MotivoSolicitud | "",
     motivoDetalle: "",
     tieneAdeudo: false,
@@ -58,7 +58,9 @@ export default function NuevaSolicitudPage() {
   });
 
   const [escritoLibre, setEscritoLibre] = useState<File | null>(null);
+  const [documentos, setDocumentos] = useState<File[]>([]);
   const escritoRef = useRef<HTMLInputElement>(null);
+  const docRef = useRef<HTMLInputElement>(null);
 
   const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -75,11 +77,16 @@ export default function NuevaSolicitudPage() {
   form.tutorTelefono &&
   form.tutorEmail &&
   form.aportacionActual &&
-  form.aportacionPropuesta >= 0 &&
+  form.aportacionPropuesta &&
   form.motivo &&
-  form.motivoDetalle &&
-  escritoLibre;
+  form.motivoDetalle;
 
+  const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setDocumentos((prev) => [...prev, ...Array.from(e.target.files!)]);
+    }
+    e.target.value = "";
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -125,6 +132,17 @@ export default function NuevaSolicitudPage() {
         });
       }
 
+      // Upload documents
+      for (const doc of documentos) {
+        const path = `${solId}/comprobatorios/${doc.name}`;
+        await supabase.storage.from("documentos").upload(path, doc);
+        await supabase.from("documentos").insert({
+          solicitud_id: solId,
+          nombre: doc.name,
+          tipo: "comprobatorio",
+          file_path: path
+        });
+      }
 
       // Audit trail
       await logAuditEvent(solId, "solicitud_creada", form.tutorEmail, "solicitante");
@@ -155,9 +173,9 @@ export default function NuevaSolicitudPage() {
           <button
             onClick={() => {
               setSubmitted(false);
-              setForm({ alumnoNombre: "", matricula: "", grupo: "", nivel: "", turno: "", tutorNombre: "", tutorTelefono: "", tutorEmail: "", aportacionActual: 0, aportacionPropuesta: -1, motivo: "", motivoDetalle: "", tieneAdeudo: false, montoAdeudo: 0 });
+              setForm({ alumnoNombre: "", matricula: "", grupo: "", nivel: "", turno: "", tutorNombre: "", tutorTelefono: "", tutorEmail: "", aportacionActual: 0, aportacionPropuesta: 0, motivo: "", motivoDetalle: "", tieneAdeudo: false, montoAdeudo: 0 });
               setEscritoLibre(null);
-              
+              setDocumentos([]);
             }}
             className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
 
@@ -282,9 +300,8 @@ export default function NuevaSolicitudPage() {
               <div className="relative">
                 <select value={form.aportacionPropuesta} onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option value={-1}>Seleccione...</option>
+                  <option value={0}>Seleccione...</option>
                   {APORTACIONES.filter((a) => a.value < form.aportacionActual || !form.aportacionActual).map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
-                  {form.aportacionActual > 0 && <option value={0}>$0.00 MXN</option>}
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
@@ -336,27 +353,82 @@ export default function NuevaSolicitudPage() {
           className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
         </section>
 
-        {/* Escrito Libre y Documentos */}
+        {/* Escrito Libre */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre y Documentos Probatorios</h3>
-          <p className="text-sm text-muted-foreground mb-3">Obligatorio. Suba fotos, archivos PDF o cualquier documento que respalde su solicitud.</p>
-          <input ref={escritoRef} type="file" accept="image/*,application/pdf,.doc,.docx" className="hidden"
+          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
+          <input ref={escritoRef} type="file" accept="image/*,application/pdf" className="hidden"
           onChange={(e) => {if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);e.target.value = "";}} />
           {escritoLibre ?
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-              <FileUp size={20} className="text-primary shrink-0" />
               <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
               <button onClick={() => setEscritoLibre(null)} className="text-destructive"><X size={20} /></button>
             </div> :
-          <button onClick={() => { escritoRef.current?.removeAttribute("capture"); escritoRef.current?.click(); }}
-            className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-              <Upload size={40} className="text-muted-foreground mb-3" />
-              <p className="font-heading font-semibold text-foreground">Cargar Documento</p>
-              <p className="text-sm text-muted-foreground mt-1">Fotos, PDF o archivos</p>
-            </button>
+
+          <div className="flex gap-3">
+              <button onClick={() => { escritoRef.current?.setAttribute("capture", "environment"); escritoRef.current?.click(); }}
+              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+                <Camera size={36} className="text-muted-foreground mb-2" />
+                <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
+              </button>
+              <button onClick={() => { escritoRef.current?.removeAttribute("capture"); escritoRef.current?.click(); }}
+              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
+                <FileUp size={36} className="text-muted-foreground mb-2" />
+                <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
+              </button>
+            </div>
           }
         </section>
 
+        {/* Documents */}
+        <section className="bg-card rounded-xl border p-6 shadow-sm">
+          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+            Documentos Comprobatorios
+            {documentos.length > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">({documentos.length} archivo{documentos.length !== 1 ? "s" : ""})</span>}
+          </h3>
+          <input ref={docRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
+          onChange={handleDocAdd} />
+          <div className="flex gap-3">
+            <button onClick={() => {
+              const input = docRef.current;
+              if (!input) return;
+              input.removeAttribute("multiple");
+              input.setAttribute("capture", "environment");
+              input.click();
+              setTimeout(() => {
+                input.removeAttribute("capture");
+                input.setAttribute("multiple", "true");
+              }, 500);
+            }}
+            className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
+              <Camera size={36} className="text-muted-foreground mb-2" />
+              <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
+            </button>
+            <button onClick={() => {
+              const input = docRef.current;
+              if (!input) return;
+              input.removeAttribute("capture");
+              input.setAttribute("multiple", "true");
+              input.click();
+            }}
+            className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
+              <FileUp size={36} className="text-muted-foreground mb-2" />
+              <p className="font-heading font-semibold text-foreground">Cargar Archivos</p>
+              <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
+            </button>
+          </div>
+          {documentos.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {documentos.map((d, i) => (
+                <div key={`${d.name}-${d.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+                  <Upload size={16} className="text-muted-foreground shrink-0" />
+                  <span className="text-foreground flex-1 truncate text-sm">{d.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{(d.size / 1024).toFixed(0)} KB</span>
+                  <button onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))} className="text-destructive shrink-0"><X size={20} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {submitError &&
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
