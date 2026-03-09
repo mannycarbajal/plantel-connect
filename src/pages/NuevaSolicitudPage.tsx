@@ -67,6 +67,9 @@ export default function NuevaSolicitudPage() {
 
   const withinWindow = isWithinSubmissionWindow();
 
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail);
+  const isValidPhone = form.tutorTelefono.length === 10;
+
   const canSubmit =
   withinWindow &&
   form.alumnoNombre &&
@@ -75,8 +78,8 @@ export default function NuevaSolicitudPage() {
   form.nivel &&
   form.turno &&
   form.tutorNombre &&
-  form.tutorTelefono &&
-  form.tutorEmail &&
+  isValidPhone &&
+  isValidEmail &&
   form.aportacionActual &&
   form.aportacionPropuesta &&
   form.motivo &&
@@ -322,25 +325,34 @@ export default function NuevaSolicitudPage() {
               
             </div>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto</label>
+              <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto (10 dígitos)</label>
               <input
                 value={form.tutorTelefono}
-                onChange={(e) => set("tutorTelefono", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  set("tutorTelefono", v);
+                }}
                 type="tel"
                 inputMode="tel"
+                maxLength={10}
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="55 1234 5678" />
+                placeholder="5512345678" />
+              {form.tutorTelefono && form.tutorTelefono.length !== 10 && (
+                <p className="text-xs text-destructive mt-1">El teléfono debe tener exactamente 10 dígitos</p>
+              )}
               
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Correo electrónico</label>
               <input
                 value={form.tutorEmail}
-                onChange={(e) => set("tutorEmail", e.target.value)}
+                onChange={(e) => set("tutorEmail", e.target.value.trim())}
                 type="email"
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="correo@ejemplo.com" />
-              
+              {form.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail) && (
+                <p className="text-xs text-destructive mt-1">Ingrese un correo electrónico válido (debe contener @ y al menos un punto)</p>
+              )}
             </div>
           </div>
         </section>
@@ -420,10 +432,16 @@ export default function NuevaSolicitudPage() {
               <label className="block text-sm font-semibold text-foreground mb-1">Monto del adeudo (MXN)</label>
               <input
               value={form.montoAdeudo || ""}
-              onChange={(e) => set("montoAdeudo", Number(e.target.value.replace(/\D/g, "")))}
-              inputMode="numeric"
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9.]/g, "");
+                // Max 6 digits before decimal, 2 after
+                if (/^\d{0,6}(\.\d{0,2})?$/.test(raw)) {
+                  set("montoAdeudo", raw === "" ? 0 : Number(raw));
+                }
+              }}
+              inputMode="decimal"
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="$0" />
+              placeholder="$0.00" />
             
             </div>
           }
