@@ -111,10 +111,14 @@ export default function NuevaSolicitudPage() {
     setSubmitError("");
 
     try {
-      // Insert solicitud
-      const { data: sol, error: solErr } = await publicClient
+      // Generate ID client-side to avoid needing SELECT after INSERT
+      const solId = crypto.randomUUID();
+
+      // Insert solicitud (no .select() to avoid SELECT policy check for anon)
+      const { error: solErr } = await publicClient
         .from("solicitudes")
         .insert({
+          id: solId,
           alumno_nombre: form.alumnoNombre,
           matricula: form.matricula,
           grupo: form.grupo,
@@ -129,15 +133,12 @@ export default function NuevaSolicitudPage() {
           motivo_detalle: form.motivoDetalle,
           tiene_adeudo: form.tieneAdeudo,
           monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
-        })
-        .select("id")
-        .single();
+        });
 
       if (solErr) {
         console.error("Insert solicitud error:", solErr.code, solErr.message, solErr.details, solErr.hint);
         throw new Error(solErr.message);
       }
-      const solId = sol.id;
 
       // Upload escrito libre (sequential, own controller)
       if (escritoLibre) {
