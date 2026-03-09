@@ -144,9 +144,9 @@ export default function NuevaSolicitudPage() {
         setEscritoStatus("uploading");
         try {
           const path = `${solId}/escrito-libre/${escritoLibre.name}`;
-          const { error: upErr } = await supabase.storage.from("documentos").upload(path, escritoLibre);
+          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, escritoLibre);
           if (upErr) throw upErr;
-          await supabase.from("documentos").insert({
+          await publicClient.from("documentos").insert({
             solicitud_id: solId,
             nombre: escritoLibre.name,
             tipo: "escrito_libre",
