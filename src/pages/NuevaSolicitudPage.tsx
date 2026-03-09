@@ -91,7 +91,8 @@ export default function NuevaSolicitudPage() {
 
   const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setDocumentos((prev) => [...prev, ...Array.from(e.target.files!)]);
+      const newFiles: TrackedFile[] = Array.from(e.target.files).map(f => ({ file: f, status: "pending" as FileUploadStatus }));
+      setDocumentos((prev) => [...prev, ...newFiles]);
     }
     e.target.value = "";
   };
