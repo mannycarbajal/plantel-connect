@@ -602,10 +602,14 @@ export default function NuevaSolicitudPage() {
           {documentos.length > 0 &&
           <div className="mt-4 space-y-2">
               {documentos.map((d, i) =>
-            <div key={`${d.name}-${d.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-                  <Upload size={16} className="text-muted-foreground shrink-0" />
-                  <span className="text-foreground flex-1 truncate text-sm">{d.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{(d.size / 1024).toFixed(0)} KB</span>
+            <div key={`${d.file.name}-${d.file.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+                  {d.status === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+                  {d.status === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+                  {d.status === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+                  {d.status === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
+                  <span className="text-foreground flex-1 truncate text-sm">{d.file.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{(d.file.size / 1024).toFixed(0)} KB</span>
+                  {d.error && <span className="text-xs text-destructive shrink-0">{d.error}</span>}
                   <button
                 onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))}
                 className="text-destructive shrink-0">
