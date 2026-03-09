@@ -322,14 +322,21 @@ export default function NuevaSolicitudPage() {
               
             </div>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto</label>
+              <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto (10 dígitos)</label>
               <input
                 value={form.tutorTelefono}
-                onChange={(e) => set("tutorTelefono", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  set("tutorTelefono", v);
+                }}
                 type="tel"
                 inputMode="tel"
+                maxLength={10}
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="55 1234 5678" />
+                placeholder="5512345678" />
+              {form.tutorTelefono && form.tutorTelefono.length !== 10 && (
+                <p className="text-xs text-destructive mt-1">El teléfono debe tener exactamente 10 dígitos</p>
+              )}
               
             </div>
             <div>
