@@ -67,6 +67,9 @@ export default function NuevaSolicitudPage() {
 
   const withinWindow = isWithinSubmissionWindow();
 
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail);
+  const isValidPhone = form.tutorTelefono.length === 10;
+
   const canSubmit =
   withinWindow &&
   form.alumnoNombre &&
@@ -75,8 +78,8 @@ export default function NuevaSolicitudPage() {
   form.nivel &&
   form.turno &&
   form.tutorNombre &&
-  form.tutorTelefono &&
-  form.tutorEmail &&
+  isValidPhone &&
+  isValidEmail &&
   form.aportacionActual &&
   form.aportacionPropuesta &&
   form.motivo &&
