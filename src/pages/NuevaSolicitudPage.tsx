@@ -343,7 +343,7 @@ export default function NuevaSolicitudPage() {
               <label className="block text-sm font-semibold text-foreground mb-1">Correo electrónico</label>
               <input
                 value={form.tutorEmail}
-                onChange={(e) => set("tutorEmail", e.target.value)}
+                onChange={(e) => set("tutorEmail", e.target.value.trim())}
                 type="email"
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="correo@ejemplo.com" />
