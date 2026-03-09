@@ -429,10 +429,16 @@ export default function NuevaSolicitudPage() {
               <label className="block text-sm font-semibold text-foreground mb-1">Monto del adeudo (MXN)</label>
               <input
               value={form.montoAdeudo || ""}
-              onChange={(e) => set("montoAdeudo", Number(e.target.value.replace(/\D/g, "")))}
-              inputMode="numeric"
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9.]/g, "");
+                // Max 6 digits before decimal, 2 after
+                if (/^\d{0,6}(\.\d{0,2})?$/.test(raw)) {
+                  set("montoAdeudo", raw === "" ? 0 : Number(raw));
+                }
+              }}
+              inputMode="decimal"
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="$0" />
+              placeholder="$0.00" />
             
             </div>
           }
