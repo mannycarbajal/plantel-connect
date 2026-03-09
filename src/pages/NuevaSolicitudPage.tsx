@@ -28,11 +28,11 @@ const TURNOS = ["Matutino", "Vespertino"];
 
 function isWithinSubmissionWindow(): boolean {
   const today = new Date();
-  // Temporary override: allow Feb 27-28, 2026
+  // Temporary override: allow Mar 9-10, 2026
   const y = today.getFullYear();
-  const m = today.getMonth(); // 0-indexed, Feb = 1
+  const m = today.getMonth(); // 0-indexed, Mar = 2
   const d = today.getDate();
-  if (y === 2026 && m === 1 && (d === 27 || d === 28)) return true;
+  if (y === 2026 && m === 2 && (d === 9 || d === 10)) return true;
   return d <= 5;
 }
 
