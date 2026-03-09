@@ -512,8 +512,13 @@ export default function NuevaSolicitudPage() {
           
           {escritoLibre ?
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+              {escritoStatus === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+              {escritoStatus === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+              {escritoStatus === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+              {escritoStatus === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
               <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
-              <button onClick={() => setEscritoLibre(null)} className="text-destructive">
+              {escritoError && <span className="text-xs text-destructive">{escritoError}</span>}
+              <button onClick={() => { setEscritoLibre(null); setEscritoStatus("pending"); setEscritoError(""); }} className="text-destructive">
                 <X size={20} />
               </button>
             </div> :
