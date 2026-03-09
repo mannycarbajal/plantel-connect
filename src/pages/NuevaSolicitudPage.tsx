@@ -166,9 +166,9 @@ export default function NuevaSolicitudPage() {
         setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
         try {
           const path = `${solId}/comprobatorios/${tracked.file.name}`;
-          const { error: upErr } = await supabase.storage.from("documentos").upload(path, tracked.file);
+          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, tracked.file);
           if (upErr) throw upErr;
-          await supabase.from("documentos").insert({
+          await publicClient.from("documentos").insert({
             solicitud_id: solId,
             nombre: tracked.file.name,
             tipo: "comprobatorio",
