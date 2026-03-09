@@ -1,6 +1,14 @@
 import React, { useState, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+
+// Public client without any active session — bypasses authenticated user RLS issues
+const publicClient = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false } }
+);
 import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit";
 import logo from "@/assets/logos-faz-plantel.png";
@@ -104,7 +112,7 @@ export default function NuevaSolicitudPage() {
 
     try {
       // Insert solicitud
-      const { data: sol, error: solErr } = await supabase
+      const { data: sol, error: solErr } = await publicClient
         .from("solicitudes")
         .insert({
           alumno_nombre: form.alumnoNombre,
@@ -136,9 +144,9 @@ export default function NuevaSolicitudPage() {
         setEscritoStatus("uploading");
         try {
           const path = `${solId}/escrito-libre/${escritoLibre.name}`;
-          const { error: upErr } = await supabase.storage.from("documentos").upload(path, escritoLibre);
+          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, escritoLibre);
           if (upErr) throw upErr;
-          await supabase.from("documentos").insert({
+          await publicClient.from("documentos").insert({
             solicitud_id: solId,
             nombre: escritoLibre.name,
             tipo: "escrito_libre",
@@ -158,9 +166,9 @@ export default function NuevaSolicitudPage() {
         setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
         try {
           const path = `${solId}/comprobatorios/${tracked.file.name}`;
-          const { error: upErr } = await supabase.storage.from("documentos").upload(path, tracked.file);
+          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, tracked.file);
           if (upErr) throw upErr;
-          await supabase.from("documentos").insert({
+          await publicClient.from("documentos").insert({
             solicitud_id: solId,
             nombre: tracked.file.name,
             tipo: "comprobatorio",
