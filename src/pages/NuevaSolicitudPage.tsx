@@ -216,6 +216,8 @@ export default function NuevaSolicitudPage() {
                 montoAdeudo: 0
               });
               setEscritoLibre(null);
+              setEscritoStatus("pending");
+              setEscritoError("");
               setDocumentos([]);
             }}
             className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
