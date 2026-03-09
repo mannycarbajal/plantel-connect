@@ -1,11 +1,13 @@
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp } from "lucide-react";
+import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit";
 import logo from "@/assets/logos-faz-plantel.png";
 
 type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
+type FileUploadStatus = "pending" | "uploading" | "done" | "error";
+type TrackedFile = { file: File; status: FileUploadStatus; error?: string };
 
 const APORTACIONES = [
 { value: 1500, label: "$1,500 MXN" },
@@ -59,7 +61,9 @@ export default function NuevaSolicitudPage() {
   });
 
   const [escritoLibre, setEscritoLibre] = useState<File | null>(null);
-  const [documentos, setDocumentos] = useState<File[]>([]);
+  const [escritoStatus, setEscritoStatus] = useState<FileUploadStatus>("pending");
+  const [escritoError, setEscritoError] = useState("");
+  const [documentos, setDocumentos] = useState<TrackedFile[]>([]);
   const escritoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +91,8 @@ export default function NuevaSolicitudPage() {
 
   const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setDocumentos((prev) => [...prev, ...Array.from(e.target.files!)]);
+      const newFiles: TrackedFile[] = Array.from(e.target.files).map(f => ({ file: f, status: "pending" as FileUploadStatus }));
+      setDocumentos((prev) => [...prev, ...newFiles]);
     }
     e.target.value = "";
   };
@@ -99,53 +104,70 @@ export default function NuevaSolicitudPage() {
 
     try {
       // Insert solicitud
-      const { data: sol, error: solErr } = await supabase.
-      from("solicitudes").
-      insert({
-        alumno_nombre: form.alumnoNombre,
-        matricula: form.matricula,
-        grupo: form.grupo,
-        nivel: form.nivel,
-        turno: form.turno,
-        tutor_nombre: form.tutorNombre,
-        tutor_telefono: form.tutorTelefono,
-        tutor_email: form.tutorEmail,
-        aportacion_actual: form.aportacionActual,
-        aportacion_propuesta: form.aportacionPropuesta,
-        motivo: form.motivo,
-        motivo_detalle: form.motivoDetalle,
-        tiene_adeudo: form.tieneAdeudo,
-        monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
-      }).
-      select("id").
-      single();
+      const { data: sol, error: solErr } = await supabase
+        .from("solicitudes")
+        .insert({
+          alumno_nombre: form.alumnoNombre,
+          matricula: form.matricula,
+          grupo: form.grupo,
+          nivel: form.nivel,
+          turno: form.turno,
+          tutor_nombre: form.tutorNombre,
+          tutor_telefono: form.tutorTelefono,
+          tutor_email: form.tutorEmail,
+          aportacion_actual: form.aportacionActual,
+          aportacion_propuesta: form.aportacionPropuesta,
+          motivo: form.motivo,
+          motivo_detalle: form.motivoDetalle,
+          tiene_adeudo: form.tieneAdeudo,
+          monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
+        })
+        .select("id")
+        .single();
 
       if (solErr) throw new Error(solErr.message);
-
       const solId = sol.id;
 
-      // Upload escrito libre
+      // Upload escrito libre (sequential, own controller)
       if (escritoLibre) {
-        const path = `${solId}/escrito-libre/${escritoLibre.name}`;
-        await supabase.storage.from("documentos").upload(path, escritoLibre);
-        await supabase.from("documentos").insert({
-          solicitud_id: solId,
-          nombre: escritoLibre.name,
-          tipo: "escrito_libre",
-          file_path: path
-        });
+        setEscritoStatus("uploading");
+        try {
+          const path = `${solId}/escrito-libre/${escritoLibre.name}`;
+          const { error: upErr } = await supabase.storage.from("documentos").upload(path, escritoLibre);
+          if (upErr) throw upErr;
+          await supabase.from("documentos").insert({
+            solicitud_id: solId,
+            nombre: escritoLibre.name,
+            tipo: "escrito_libre",
+            file_path: path
+          });
+          setEscritoStatus("done");
+        } catch (err: any) {
+          setEscritoStatus("error");
+          setEscritoError(err.message || "Error al subir escrito libre");
+        }
       }
 
-      // Upload documents
-      for (const doc of documentos) {
-        const path = `${solId}/comprobatorios/${doc.name}`;
-        await supabase.storage.from("documentos").upload(path, doc);
-        await supabase.from("documentos").insert({
-          solicitud_id: solId,
-          nombre: doc.name,
-          tipo: "comprobatorio",
-          file_path: path
-        });
+      // Upload documents SEQUENTIALLY
+      for (let i = 0; i < documentos.length; i++) {
+        const tracked = documentos[i];
+        // Update status to uploading
+        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
+        try {
+          const path = `${solId}/comprobatorios/${tracked.file.name}`;
+          const { error: upErr } = await supabase.storage.from("documentos").upload(path, tracked.file);
+          if (upErr) throw upErr;
+          await supabase.from("documentos").insert({
+            solicitud_id: solId,
+            nombre: tracked.file.name,
+            tipo: "comprobatorio",
+            file_path: path
+          });
+          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "done" } : d));
+        } catch (err: any) {
+          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "error", error: err.message || "Error al subir" } : d));
+          // Continue with next file, don't abort
+        }
       }
 
       // Audit trail
@@ -194,6 +216,8 @@ export default function NuevaSolicitudPage() {
                 montoAdeudo: 0
               });
               setEscritoLibre(null);
+              setEscritoStatus("pending");
+              setEscritoError("");
               setDocumentos([]);
             }}
             className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
@@ -490,8 +514,13 @@ export default function NuevaSolicitudPage() {
           
           {escritoLibre ?
           <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+              {escritoStatus === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+              {escritoStatus === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+              {escritoStatus === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+              {escritoStatus === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
               <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
-              <button onClick={() => setEscritoLibre(null)} className="text-destructive">
+              {escritoError && <span className="text-xs text-destructive">{escritoError}</span>}
+              <button onClick={() => { setEscritoLibre(null); setEscritoStatus("pending"); setEscritoError(""); }} className="text-destructive">
                 <X size={20} />
               </button>
             </div> :
@@ -575,10 +604,14 @@ export default function NuevaSolicitudPage() {
           {documentos.length > 0 &&
           <div className="mt-4 space-y-2">
               {documentos.map((d, i) =>
-            <div key={`${d.name}-${d.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-                  <Upload size={16} className="text-muted-foreground shrink-0" />
-                  <span className="text-foreground flex-1 truncate text-sm">{d.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{(d.size / 1024).toFixed(0)} KB</span>
+            <div key={`${d.file.name}-${d.file.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+                  {d.status === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+                  {d.status === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+                  {d.status === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+                  {d.status === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
+                  <span className="text-foreground flex-1 truncate text-sm">{d.file.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{(d.file.size / 1024).toFixed(0)} KB</span>
+                  {d.error && <span className="text-xs text-destructive shrink-0">{d.error}</span>}
                   <button
                 onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))}
                 className="text-destructive shrink-0">
