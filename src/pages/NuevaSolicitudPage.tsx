@@ -1,11 +1,13 @@
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp } from "lucide-react";
+import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit";
 import logo from "@/assets/logos-faz-plantel.png";
 
 type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
+type FileUploadStatus = "pending" | "uploading" | "done" | "error";
+type TrackedFile = { file: File; status: FileUploadStatus; error?: string };
 
 const APORTACIONES = [
 { value: 1500, label: "$1,500 MXN" },
