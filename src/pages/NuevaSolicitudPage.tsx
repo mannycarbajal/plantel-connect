@@ -104,53 +104,70 @@ export default function NuevaSolicitudPage() {
 
     try {
       // Insert solicitud
-      const { data: sol, error: solErr } = await supabase.
-      from("solicitudes").
-      insert({
-        alumno_nombre: form.alumnoNombre,
-        matricula: form.matricula,
-        grupo: form.grupo,
-        nivel: form.nivel,
-        turno: form.turno,
-        tutor_nombre: form.tutorNombre,
-        tutor_telefono: form.tutorTelefono,
-        tutor_email: form.tutorEmail,
-        aportacion_actual: form.aportacionActual,
-        aportacion_propuesta: form.aportacionPropuesta,
-        motivo: form.motivo,
-        motivo_detalle: form.motivoDetalle,
-        tiene_adeudo: form.tieneAdeudo,
-        monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
-      }).
-      select("id").
-      single();
+      const { data: sol, error: solErr } = await supabase
+        .from("solicitudes")
+        .insert({
+          alumno_nombre: form.alumnoNombre,
+          matricula: form.matricula,
+          grupo: form.grupo,
+          nivel: form.nivel,
+          turno: form.turno,
+          tutor_nombre: form.tutorNombre,
+          tutor_telefono: form.tutorTelefono,
+          tutor_email: form.tutorEmail,
+          aportacion_actual: form.aportacionActual,
+          aportacion_propuesta: form.aportacionPropuesta,
+          motivo: form.motivo,
+          motivo_detalle: form.motivoDetalle,
+          tiene_adeudo: form.tieneAdeudo,
+          monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
+        })
+        .select("id")
+        .single();
 
       if (solErr) throw new Error(solErr.message);
-
       const solId = sol.id;
 
-      // Upload escrito libre
+      // Upload escrito libre (sequential, own controller)
       if (escritoLibre) {
-        const path = `${solId}/escrito-libre/${escritoLibre.name}`;
-        await supabase.storage.from("documentos").upload(path, escritoLibre);
-        await supabase.from("documentos").insert({
-          solicitud_id: solId,
-          nombre: escritoLibre.name,
-          tipo: "escrito_libre",
-          file_path: path
-        });
+        setEscritoStatus("uploading");
+        try {
+          const path = `${solId}/escrito-libre/${escritoLibre.name}`;
+          const { error: upErr } = await supabase.storage.from("documentos").upload(path, escritoLibre);
+          if (upErr) throw upErr;
+          await supabase.from("documentos").insert({
+            solicitud_id: solId,
+            nombre: escritoLibre.name,
+            tipo: "escrito_libre",
+            file_path: path
+          });
+          setEscritoStatus("done");
+        } catch (err: any) {
+          setEscritoStatus("error");
+          setEscritoError(err.message || "Error al subir escrito libre");
+        }
       }
 
-      // Upload documents
-      for (const doc of documentos) {
-        const path = `${solId}/comprobatorios/${doc.name}`;
-        await supabase.storage.from("documentos").upload(path, doc);
-        await supabase.from("documentos").insert({
-          solicitud_id: solId,
-          nombre: doc.name,
-          tipo: "comprobatorio",
-          file_path: path
-        });
+      // Upload documents SEQUENTIALLY
+      for (let i = 0; i < documentos.length; i++) {
+        const tracked = documentos[i];
+        // Update status to uploading
+        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
+        try {
+          const path = `${solId}/comprobatorios/${tracked.file.name}`;
+          const { error: upErr } = await supabase.storage.from("documentos").upload(path, tracked.file);
+          if (upErr) throw upErr;
+          await supabase.from("documentos").insert({
+            solicitud_id: solId,
+            nombre: tracked.file.name,
+            tipo: "comprobatorio",
+            file_path: path
+          });
+          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "done" } : d));
+        } catch (err: any) {
+          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "error", error: err.message || "Error al subir" } : d));
+          // Continue with next file, don't abort
+        }
       }
 
       // Audit trail
