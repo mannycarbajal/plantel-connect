@@ -347,7 +347,9 @@ export default function NuevaSolicitudPage() {
                 type="email"
                 className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="correo@ejemplo.com" />
-              
+              {form.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail) && (
+                <p className="text-xs text-destructive mt-1">Ingrese un correo electrónico válido (debe contener @ y al menos un punto)</p>
+              )}
             </div>
           </div>
         </section>
