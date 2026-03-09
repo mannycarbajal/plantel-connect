@@ -125,7 +125,10 @@ export default function NuevaSolicitudPage() {
         .select("id")
         .single();
 
-      if (solErr) throw new Error(solErr.message);
+      if (solErr) {
+        console.error("Insert solicitud error:", solErr.code, solErr.message, solErr.details, solErr.hint);
+        throw new Error(solErr.message);
+      }
       const solId = sol.id;
 
       // Upload escrito libre (sequential, own controller)
