@@ -112,7 +112,7 @@ export default function NuevaSolicitudPage() {
 
     try {
       // Insert solicitud
-      const { data: sol, error: solErr } = await supabase
+      const { data: sol, error: solErr } = await publicClient
         .from("solicitudes")
         .insert({
           alumno_nombre: form.alumnoNombre,
