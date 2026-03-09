@@ -1,14 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function logAuditEvent(
   solicitudId: string,
   action: string,
   userEmail?: string,
-  userRole?: string
+  userRole?: string,
+  client?: SupabaseClient
 ) {
+  const db = client ?? supabase;
   const deviceName = navigator.userAgent;
 
-  // Get IP from a free service
   let ipAddress = "unknown";
   try {
     const res = await fetch("https://api.ipify.org?format=json");
@@ -18,7 +20,7 @@ export async function logAuditEvent(
     // ignore
   }
 
-  await supabase.from("audit_trail").insert({
+  await db.from("audit_trail").insert({
     solicitud_id: solicitudId,
     action,
     user_email: userEmail ?? null,
@@ -32,7 +34,6 @@ export async function markPrimeraLectura(
   solicitudId: string,
   field: "revisor_primera_lectura" | "enlace_primera_lectura" | "direccion_primera_lectura" | "comite_primera_lectura"
 ) {
-  // Only set if not already set
   const { data } = await supabase
     .from("solicitudes")
     .select(field)

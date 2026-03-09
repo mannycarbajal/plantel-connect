@@ -182,8 +182,8 @@ export default function NuevaSolicitudPage() {
         }
       }
 
-      // Audit trail
-      await logAuditEvent(solId, "solicitud_creada", form.tutorEmail, "solicitante");
+      // Audit trail — use publicClient to avoid RLS issues
+      await logAuditEvent(solId, "solicitud_creada", form.tutorEmail, "solicitante", publicClient);
 
       setSubmitted(true);
     } catch (err: any) {
