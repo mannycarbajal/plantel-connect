@@ -61,7 +61,9 @@ export default function NuevaSolicitudPage() {
   });
 
   const [escritoLibre, setEscritoLibre] = useState<File | null>(null);
-  const [documentos, setDocumentos] = useState<File[]>([]);
+  const [escritoStatus, setEscritoStatus] = useState<FileUploadStatus>("pending");
+  const [escritoError, setEscritoError] = useState("");
+  const [documentos, setDocumentos] = useState<TrackedFile[]>([]);
   const escritoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
