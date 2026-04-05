@@ -17,7 +17,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function RevisorPage() {
   const { user } = useAuth();
-  const isAuditor = user?.role === "auditor";
+  const isReadOnly = user?.role === "direccion";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -28,7 +28,7 @@ export default function RevisorPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = isAuditor
+      const data = isReadOnly
         ? await fetchSolicitudes(["pendiente_revision", "en_revision", "enviada_enlace", "rechazada"])
         : await fetchSolicitudes(["pendiente_revision", "en_revision"]);
       setSolicitudes(data);
@@ -41,7 +41,7 @@ export default function RevisorPage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      if (!isAuditor) {
+      if (!isReadOnly) {
         markPrimeraLectura(selected.id, "revisor_primera_lectura");
         if (selected.status === "pendiente_revision") {
           updateSolicitudStatus(selected.id, "en_revision", { fecha_validacion: null })
@@ -178,7 +178,7 @@ export default function RevisorPage() {
                     </div>
                   </div>
 
-                  {!isAuditor && (
+                  {!isReadOnly && (
                     <div>
                       <label className="block text-muted-foreground font-semibold mb-1">Comentarios del revisor:</label>
                       <textarea value={comentarios} onChange={e => setComentarios(e.target.value)}
@@ -186,7 +186,7 @@ export default function RevisorPage() {
                         placeholder="Observaciones sobre la documentación..." />
                     </div>
                   )}
-                  {selected.comentarios_revisor && isAuditor && (
+                  {selected.comentarios_revisor && isReadOnly && (
                     <div className="bg-accent/10 rounded-lg p-3">
                       <p className="text-muted-foreground font-semibold mb-1">Nota del revisor:</p>
                       <p className="text-foreground">{selected.comentarios_revisor}</p>
@@ -194,7 +194,7 @@ export default function RevisorPage() {
                   )}
                 </div>
 
-                {!isAuditor && (
+                {!isReadOnly && (
                   <div className="flex gap-3 mt-6">
                     <button onClick={handleReject} disabled={acting}
                       className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">

@@ -16,7 +16,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function ComitePage() {
   const { user } = useAuth();
-  const isAuditor = user?.role === "auditor";
+  const isReadOnly = user?.role === "direccion";
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
@@ -38,7 +38,7 @@ export default function ComitePage() {
   useEffect(() => {
     if (selected) {
       fetchDocumentos(selected.id).then(setDocs).catch(console.error);
-      if (!isAuditor) markPrimeraLectura(selected.id, "comite_primera_lectura");
+      if (!isReadOnly) markPrimeraLectura(selected.id, "comite_primera_lectura");
     }
   }, [selected?.id]);
 
@@ -166,7 +166,7 @@ export default function ComitePage() {
                     </div>
                   </div>
 
-                  {!isAuditor && (
+                  {!isReadOnly && (
                     <>
                       <div>
                         <label className="block text-muted-foreground font-semibold mb-1">Resolución del Comité:</label>
@@ -178,7 +178,7 @@ export default function ComitePage() {
                   )}
                 </div>
 
-                {!isAuditor && (
+                {!isReadOnly && (
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => handleAction("rechazada")} disabled={acting}
                       className="touch-target flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-destructive text-destructive font-heading font-semibold hover:bg-destructive/5 transition-colors">
