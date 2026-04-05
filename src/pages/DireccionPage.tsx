@@ -16,7 +16,7 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function DireccionPage() {
   const { user } = useAuth();
-  const isReadOnly = user?.role === "direccion";
+  const isReadOnly = false;
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
