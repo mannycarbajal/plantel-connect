@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users, Eye } from "lucide-react";
+import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users } from "lucide-react";
 import logo from "@/assets/logos-faz-plantel.png";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -9,7 +9,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   enlace: "Enlace de Nivel",
   direccion: "Dirección Operativa",
   comite: "Comité",
-  auditor: "Auditor"
 };
 
 const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.ElementType;}[]> = {
@@ -20,17 +19,13 @@ const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.Elemen
   { path: "/enlace/pendientes", label: "Solicitudes Asignadas", icon: Link2 }],
 
   direccion: [
-  { path: "/direccion/panel", label: "Panel de Solicitudes", icon: ShieldCheck }],
+  { path: "/direccion/panel", label: "Panel de Solicitudes", icon: ShieldCheck },
+  { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
+  { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
+  { path: "/comite/panel", label: "Vista Comité", icon: Users }],
 
   comite: [
   { path: "/comite/panel", label: "Casos para Comité", icon: Users }],
-
-  auditor: [
-  { path: "/auditor/panel", label: "Panel de Auditoría", icon: Eye },
-  { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
-  { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
-  { path: "/direccion/panel", label: "Vista Dirección", icon: ShieldCheck },
-  { path: "/comite/panel", label: "Vista Comité", icon: Users }]
 
 };
 export default function AppLayout({ children }: {children: React.ReactNode;}) {
@@ -58,7 +53,7 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
             <p className="text-xs opacity-80">{ROLE_LABELS[user.role]}</p>
           </div>
           <button
-            onClick={async () => {await logout();navigate("/login");}}
+            onClick={async () => { await logout(); }}
             className="touch-target flex items-center justify-center rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors p-3"
             aria-label="Cerrar sesión">
 
@@ -90,6 +85,7 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
 
       <footer className="bg-muted text-muted-foreground text-center text-xs py-3 font-body">
         © 2026 Fundación Azteca de Grupo Salinas — Plantel Azteca CDMX
+        <span className="block text-muted-foreground/60 mt-0.5">v1.1.0</span>
       </footer>
     </div>);
 

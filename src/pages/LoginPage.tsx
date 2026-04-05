@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import logo from "@/assets/logos-faz-plantel.png";
 
 const ROLE_ROUTES: Record<string, string> = {
@@ -13,37 +13,93 @@ const ROLE_ROUTES: Record<string, string> = {
 };
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingUser, setPendingUser] = useState<{ email: string } | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
     setError("");
+    setPendingUser(null);
+
     const err = await login(email, password);
     if (err) {
       setError("Credenciales incorrectas. Intente de nuevo.");
       setLoading(false);
       return;
     }
-    // Wait for auth state to settle and get role
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser();
+
+    // After login, check user from context — need to fetch profile from central
+    const { centralSupabase } = await import("@/integrations/supabase/centralClient");
+    const { data: { user } } = await centralSupabase.auth.getUser();
+
     if (user) {
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
+      const { data: profile } = await centralSupabase
+        .from("profiles")
+        .select("role, status, full_name")
+        .eq("id", user.id)
         .maybeSingle();
-      const route = ROLE_ROUTES[roleData?.role ?? ""] ?? "/login";
+
+      if (!profile) {
+        setError("No se encontró perfil para este usuario.");
+        setLoading(false);
+        return;
+      }
+
+      if (profile.status === "pending") {
+        setPendingUser({ email: user.email ?? email });
+        setLoading(false);
+        return;
+      }
+
+      // Map role to route
+      const roleMap: Record<string, string> = {
+        master_tic: "direccion",
+        direccion: "direccion",
+        tic: "revisor",
+        enlace: "enlace",
+        coordinador: "enlace",
+      };
+      const appRole = roleMap[profile.role] ?? "";
+      const route = ROLE_ROUTES[appRole] ?? "/login";
       navigate(route);
     }
     setLoading(false);
   };
+
+  if (pendingUser) {
+    return (
+      <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-card rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-lg text-center"
+        >
+          <img src={logo} alt="Fundación Azteca / Plantel Azteca" className="h-16 w-auto mb-6 mx-auto" />
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+            <p className="text-amber-800 font-semibold text-lg mb-2">⏳ Cuenta pendiente</p>
+            <p className="text-amber-700 text-sm">
+              Tu cuenta está pendiente de aprobación. Contacta al administrador TIC.
+            </p>
+          </div>
+          <p className="text-muted-foreground text-sm mb-6">{pendingUser.email}</p>
+          <button
+            onClick={logout}
+            className="touch-target flex items-center justify-center gap-2 mx-auto px-6 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-bold transition-all hover:bg-primary/90"
+          >
+            <LogOut size={18} />
+            Cerrar sesión
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-6">

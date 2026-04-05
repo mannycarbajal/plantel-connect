@@ -11,7 +11,7 @@ import RevisorPage from "./pages/RevisorPage";
 import EnlacePage from "./pages/EnlacePage";
 import DireccionPage from "./pages/DireccionPage";
 import ComitePage from "./pages/ComitePage";
-import AuditorPage from "./pages/AuditorPage";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,7 +34,6 @@ function AppRoutes() {
     enlace: "/enlace/pendientes",
     direccion: "/direccion/panel",
     comite: "/comite/panel",
-    auditor: "/auditor/panel",
   };
 
   return (
@@ -46,11 +45,10 @@ function AppRoutes() {
         isAuthenticated && user ? <Navigate to={ROLE_HOME[user.role] ?? "/"} replace /> : <LoginPage />
       } />
 
-      <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor", "auditor"]}><RevisorPage /></ProtectedRoute>} />
-      <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace", "auditor"]}><EnlacePage /></ProtectedRoute>} />
-      <Route path="/direccion/panel" element={<ProtectedRoute allowedRoles={["direccion", "auditor"]}><DireccionPage /></ProtectedRoute>} />
-      <Route path="/comite/panel" element={<ProtectedRoute allowedRoles={["comite", "auditor"]}><ComitePage /></ProtectedRoute>} />
-      <Route path="/auditor/panel" element={<ProtectedRoute allowedRoles={["auditor"]}><AuditorPage /></ProtectedRoute>} />
+      <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor", "direccion"]}><RevisorPage /></ProtectedRoute>} />
+      <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace", "direccion"]}><EnlacePage /></ProtectedRoute>} />
+      <Route path="/direccion/panel" element={<ProtectedRoute allowedRoles={["direccion"]}><DireccionPage /></ProtectedRoute>} />
+      <Route path="/comite/panel" element={<ProtectedRoute allowedRoles={["comite", "direccion"]}><ComitePage /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
