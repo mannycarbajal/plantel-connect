@@ -10,7 +10,6 @@ const ROLE_ROUTES: Record<string, string> = {
   enlace: "/enlace/pendientes",
   direccion: "/direccion/panel",
   comite: "/comite/panel",
-  auditor: "/auditor/panel",
 };
 
 export default function LoginPage() {
