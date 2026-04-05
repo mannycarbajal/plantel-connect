@@ -9,7 +9,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   enlace: "Enlace de Nivel",
   direccion: "Dirección Operativa",
   comite: "Comité",
-  auditor: "Auditor"
 };
 
 const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.ElementType;}[]> = {
@@ -25,12 +24,11 @@ const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.Elemen
   comite: [
   { path: "/comite/panel", label: "Casos para Comité", icon: Users }],
 
-  auditor: [
-  { path: "/auditor/panel", label: "Panel de Auditoría", icon: Eye },
+  direccion: [
+  { path: "/direccion/panel", label: "Panel de Solicitudes", icon: ShieldCheck },
   { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
   { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
-  { path: "/direccion/panel", label: "Vista Dirección", icon: ShieldCheck },
-  { path: "/comite/panel", label: "Vista Comité", icon: Users }]
+  { path: "/comite/panel", label: "Vista Comité", icon: Users }],
 
 };
 export default function AppLayout({ children }: {children: React.ReactNode;}) {
@@ -90,6 +88,7 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
 
       <footer className="bg-muted text-muted-foreground text-center text-xs py-3 font-body">
         © 2026 Fundación Azteca de Grupo Salinas — Plantel Azteca CDMX
+        <span className="block text-muted-foreground/60 mt-0.5">v1.1.0</span>
       </footer>
     </div>);
 
