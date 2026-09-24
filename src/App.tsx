@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
+import RecuperarPage from "./pages/RecuperarPage";
+import RestablecerPage from "./pages/RestablecerPage";
 import NuevaSolicitudPage from "./pages/NuevaSolicitudPage";
 import RevisorPage from "./pages/RevisorPage";
 import EnlacePage from "./pages/EnlacePage";
@@ -44,6 +46,8 @@ function AppRoutes() {
       <Route path="/login" element={
         isAuthenticated && user ? <Navigate to={ROLE_HOME[user.role] ?? "/"} replace /> : <LoginPage />
       } />
+      <Route path="/recuperar" element={<RecuperarPage />} />
+      <Route path="/restablecer" element={<RestablecerPage />} />
 
       <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor", "direccion"]}><RevisorPage /></ProtectedRoute>} />
       <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace", "direccion"]}><EnlacePage /></ProtectedRoute>} />
