@@ -17,6 +17,23 @@ type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
 type FileUploadStatus = "pending" | "uploading" | "done" | "error";
 type TrackedFile = { file: File; status: FileUploadStatus; error?: string };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_DOCS = 10;
+const ACCEPTED_EXT = ["jpg", "jpeg", "png", "heic", "pdf"];
+const ACCEPT_ATTR = ".jpg,.jpeg,.png,.heic,.pdf";
+
+function getExt(name: string): string {
+  const m = name.toLowerCase().match(/\.([a-z0-9]+)$/);
+  return m ? m[1] : "";
+}
+
+function validateFile(file: File): string | null {
+  const ext = getExt(file.name);
+  if (!ACCEPTED_EXT.includes(ext)) return "Tipo no permitido. Solo jpg, png, heic o pdf.";
+  if (file.size > MAX_FILE_SIZE) return "El archivo supera el límite de 10 MB.";
+  return null;
+}
+
 const APORTACIONES = [
 { value: 1500, label: "$1,500 MXN" },
 { value: 1000, label: "$1,000 MXN" },
@@ -66,6 +83,7 @@ export default function NuevaSolicitudPage() {
   const [escritoStatus, setEscritoStatus] = useState<FileUploadStatus>("pending");
   const [escritoError, setEscritoError] = useState("");
   const [documentos, setDocumentos] = useState<TrackedFile[]>([]);
+  const [docError, setDocError] = useState("");
   const escritoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
@@ -89,11 +107,26 @@ export default function NuevaSolicitudPage() {
   form.aportacionActual &&
   form.aportacionPropuesta &&
   form.motivo &&
-  form.motivoDetalle;
+  form.motivoDetalle &&
+  !!escritoLibre && !escritoError;
 
   const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles: TrackedFile[] = Array.from(e.target.files).map(f => ({ file: f, status: "pending" as FileUploadStatus }));
+      const remaining = MAX_DOCS - documentos.length;
+      if (remaining <= 0) {
+        setDocError(`Máximo ${MAX_DOCS} documentos comprobatorios.`);
+        e.target.value = "";
+        return;
+      }
+      setDocError("");
+      const newFiles: TrackedFile[] = Array.from(e.target.files)
+        .slice(0, remaining)
+        .map(f => {
+          const err = validateFile(f);
+          return err
+            ? { file: f, status: "error" as FileUploadStatus, error: err }
+            : { file: f, status: "pending" as FileUploadStatus };
+        });
       setDocumentos((prev) => [...prev, ...newFiles]);
     }
     e.target.value = "";
@@ -138,7 +171,8 @@ export default function NuevaSolicitudPage() {
       if (escritoLibre) {
         setEscritoStatus("uploading");
         try {
-          const path = `${solId}/escrito-libre/${escritoLibre.name}`;
+          const ext = getExt(escritoLibre.name);
+          const path = `${solId}/escrito-libre/${crypto.randomUUID()}.${ext}`;
           const { error: upErr } = await publicClient.storage.from("documentos").upload(path, escritoLibre);
           if (upErr) throw upErr;
           await publicClient.from("documentos").insert({
@@ -157,10 +191,12 @@ export default function NuevaSolicitudPage() {
       // Upload documents SEQUENTIALLY
       for (let i = 0; i < documentos.length; i++) {
         const tracked = documentos[i];
+        if (tracked.status === "error") continue;
         // Update status to uploading
         setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
         try {
-          const path = `${solId}/comprobatorios/${tracked.file.name}`;
+          const ext = getExt(tracked.file.name);
+          const path = `${solId}/comprobatorios/${crypto.randomUUID()}.${ext}`;
           const { error: upErr } = await publicClient.storage.from("documentos").upload(path, tracked.file);
           if (upErr) throw upErr;
           await publicClient.from("documentos").insert({
@@ -225,6 +261,7 @@ export default function NuevaSolicitudPage() {
               setEscritoStatus("pending");
               setEscritoError("");
               setDocumentos([]);
+              setDocError("");
             }}
             className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
             
@@ -508,13 +545,19 @@ export default function NuevaSolicitudPage() {
         {/* Escrito Libre */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
+          <p className="text-sm text-muted-foreground mb-3">Debe estar firmado por el tutor.</p>
           <input
             ref={escritoRef}
             type="file"
-            accept="image/*,application/pdf"
+            accept={ACCEPT_ATTR}
             className="hidden"
             onChange={(e) => {
-              if (e.target.files?.[0]) setEscritoLibre(e.target.files[0]);
+              if (e.target.files?.[0]) {
+                const f = e.target.files[0];
+                const err = validateFile(f);
+                if (err) { setEscritoError(err); setEscritoLibre(null); }
+                else { setEscritoError(""); setEscritoLibre(f); }
+              }
               e.target.value = "";
             }} />
           
@@ -531,7 +574,11 @@ export default function NuevaSolicitudPage() {
               </button>
             </div> :
 
-          <div className="flex gap-3">
+          <>
+            {escritoError && !escritoLibre && (
+              <p className="text-xs text-destructive mb-3">{escritoError}</p>
+            )}
+            <div className="flex gap-3">
               <button
               onClick={() => {
                 escritoRef.current?.setAttribute("capture", "environment");
@@ -553,6 +600,7 @@ export default function NuevaSolicitudPage() {
                 <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
               </button>
             </div>
+          </>
           }
         </section>
 
@@ -569,7 +617,7 @@ export default function NuevaSolicitudPage() {
           <input
             ref={docRef}
             type="file"
-            accept="image/*,application/pdf"
+            accept={ACCEPT_ATTR}
             multiple
             className="hidden"
             onChange={handleDocAdd} />
@@ -607,6 +655,9 @@ export default function NuevaSolicitudPage() {
               <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
             </button>
           </div>
+          {docError && (
+            <p className="text-xs text-destructive mt-2">{docError}</p>
+          )}
           {documentos.length > 0 &&
           <div className="mt-4 space-y-2">
               {documentos.map((d, i) =>
