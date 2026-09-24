@@ -141,6 +141,11 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
+          <div className="text-right">
+            <a href="/recuperar" className="text-sm text-primary hover:underline">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
         </div>
 
         {error && (
