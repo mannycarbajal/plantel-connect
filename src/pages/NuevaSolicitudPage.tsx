@@ -22,8 +22,7 @@ const APORTACIONES = [
 { value: 1000, label: "$1,000 MXN" },
 { value: 800, label: "$800 MXN" },
 { value: 500, label: "$500 MXN" },
-{ value: 300, label: "$300 MXN" },
-{ value: 300, label: "$0 MXN" }];
+{ value: 300, label: "$300 MXN" }];
 
 
 const MOTIVOS: {value: MotivoSolicitud;label: string;}[] = [
