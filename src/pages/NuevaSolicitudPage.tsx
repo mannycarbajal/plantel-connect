@@ -22,8 +22,7 @@ const APORTACIONES = [
 { value: 1000, label: "$1,000 MXN" },
 { value: 800, label: "$800 MXN" },
 { value: 500, label: "$500 MXN" },
-{ value: 300, label: "$300 MXN" },
-{ value: 300, label: "$0 MXN" }];
+{ value: 300, label: "$300 MXN" }];
 
 
 const MOTIVOS: {value: MotivoSolicitud;label: string;}[] = [
@@ -38,12 +37,7 @@ const TURNOS = ["Matutino", "Vespertino"];
 
 function isWithinSubmissionWindow(): boolean {
   const today = new Date();
-  // Temporary override: allow Mar 9-10, 2026
-  const y = today.getFullYear();
-  const m = today.getMonth(); // 0-indexed, Mar = 2
-  const d = today.getDate();
-  if (y === 2026 && m === 2 && (d === 9 || d === 10)) return true;
-  return d <= 5;
+  return today.getDate() <= 5;
 }
 
 export default function NuevaSolicitudPage() {
