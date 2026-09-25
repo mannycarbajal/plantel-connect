@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -88,6 +88,90 @@ export default function NuevaSolicitudPage() {
   const docRef = useRef<HTMLInputElement>(null);
 
   const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const resetForm = () => {
+    setForm({
+      alumnoNombre: "",
+      matricula: "",
+      grupo: "",
+      nivel: "",
+      turno: "",
+      tutorNombre: "",
+      tutorTelefono: "",
+      tutorEmail: "",
+      aportacionActual: 0,
+      aportacionPropuesta: 0,
+      motivo: "" as MotivoSolicitud | "",
+      motivoDetalle: "",
+      tieneAdeudo: false,
+      montoAdeudo: 0
+    });
+    setEscritoLibre(null);
+    setEscritoStatus("pending");
+    setEscritoError("");
+    setDocumentos([]);
+    setDocError("");
+    setSubmitError("");
+  };
+
+  // --- Inactivity auto-reset (3 min) with 20s warning ---
+  const [idleSeconds, setIdleSeconds] = useState(0);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const idleRef = useRef(0);
+
+  useEffect(() => {
+    if (submitting || submitted) return;
+    const resetIdle = () => {
+      idleRef.current = 0;
+      setIdleSeconds(0);
+      setShowIdleWarning(false);
+    };
+    const events = ["input", "click", "keydown", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetIdle));
+    return () => events.forEach((e) => window.removeEventListener(e, resetIdle));
+  }, [submitting, submitted]);
+
+  useEffect(() => {
+    if (submitting || submitted) return;
+    const id = setInterval(() => {
+      idleRef.current += 1;
+      const s = idleRef.current;
+      setIdleSeconds(s);
+      if (s >= 160) setShowIdleWarning(true);
+      if (s >= 180) {
+        idleRef.current = 0;
+        setShowIdleWarning(false);
+        resetForm();
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [submitting, submitted]);
+
+  // --- Success screen auto-return after 60s ---
+  const [successCountdown, setSuccessCountdown] = useState(60);
+  useEffect(() => {
+    if (!submitted) { setSuccessCountdown(60); return; }
+    const id = setInterval(() => {
+      setSuccessCountdown((prev) => {
+        if (prev <= 1) {
+          resetForm();
+          setSubmitted(false);
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [submitted]);
+
+  const handleClear = () => {
+    if (window.confirm("¿Limpiar todos los campos del formulario?")) {
+      idleRef.current = 0;
+      setIdleSeconds(0);
+      setShowIdleWarning(false);
+      resetForm();
+    }
+  };
 
   const withinWindow = isWithinSubmissionWindow();
 
@@ -235,34 +319,12 @@ export default function NuevaSolicitudPage() {
             <CheckCircle size={48} className="text-success" />
           </div>
           <h2 className="font-heading text-2xl font-bold text-foreground mb-2">Solicitud Enviada</h2>
-          <p className="text-muted-foreground mb-8 max-w-md">
+          <p className="text-muted-foreground mb-4 max-w-md">
             Su solicitud ha sido registrada exitosamente. El equipo de revisión la analizará en los próximos días.
           </p>
+          <p className="text-xs text-muted-foreground mb-8">Esta pantalla se cerrará automáticamente en {successCountdown} segundos.</p>
           <button
-            onClick={() => {
-              setSubmitted(false);
-              setForm({
-                alumnoNombre: "",
-                matricula: "",
-                grupo: "",
-                nivel: "",
-                turno: "",
-                tutorNombre: "",
-                tutorTelefono: "",
-                tutorEmail: "",
-                aportacionActual: 0,
-                aportacionPropuesta: 0,
-                motivo: "",
-                motivoDetalle: "",
-                tieneAdeudo: false,
-                montoAdeudo: 0
-              });
-              setEscritoLibre(null);
-              setEscritoStatus("pending");
-              setEscritoError("");
-              setDocumentos([]);
-              setDocError("");
-            }}
+            onClick={() => { resetForm(); setSubmitted(false); }}
             className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
             
             Nueva Solicitud
@@ -693,10 +755,32 @@ export default function NuevaSolicitudPage() {
           disabled={!canSubmit || submitting}
           className={`touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg
             ${canSubmit && !submitting ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}>
-          
+
           {submitting ? "Enviando..." : "Enviar Solicitud"}
         </button>
+
+        <button
+          onClick={handleClear}
+          disabled={submitting}
+          className="touch-target w-full py-3 rounded-xl border-2 border-border text-foreground font-heading font-semibold hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Limpiar formulario
+        </button>
       </div>
+
+      {showIdleWarning && !submitting && !submitted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card rounded-2xl p-6 max-w-sm w-full text-center shadow-xl">
+            <AlertCircle size={40} className="text-destructive mx-auto mb-3" />
+            <h3 className="font-heading font-bold text-lg text-foreground mb-2">¿Sigues llenando el formulario?</h3>
+            <p className="text-muted-foreground mb-4">Por inactividad, el formulario se reiniciará en {180 - idleSeconds} segundos.</p>
+            <button
+              onClick={() => { idleRef.current = 0; setIdleSeconds(0); setShowIdleWarning(false); }}
+              className="touch-target w-full py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90">
+              Seguir llenando
+            </button>
+          </div>
+        </div>
+      )}
     </PublicLayout>);
 
 }
