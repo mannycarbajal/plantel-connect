@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { centralSupabase } from "@/integrations/supabase/centralClient";
 import logo from "@/assets/logos-faz-plantel.png";
@@ -8,6 +8,7 @@ import logo from "@/assets/logos-faz-plantel.png";
 export default function RestablecerPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -16,22 +17,29 @@ export default function RestablecerPage() {
 
   useEffect(() => {
     let mounted = true;
+    let timer: ReturnType<typeof setTimeout>;
 
     // Check if we already have a recovery session on mount
     centralSupabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && mounted) setReady(true);
+      if (session?.user && mounted) { setReady(true); clearTimeout(timer); }
     });
 
     const { data: { subscription } } = centralSupabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session?.user)) {
-          if (mounted) setReady(true);
+          if (mounted) { setReady(true); clearTimeout(timer); }
         }
       }
     );
 
+    // If no recovery session is detected within 5s, treat the link as invalid/expired
+    timer = setTimeout(() => {
+      if (mounted) setExpired(true);
+    }, 5000);
+
     return () => {
       mounted = false;
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);
@@ -56,6 +64,7 @@ export default function RestablecerPage() {
       return;
     }
 
+    await centralSupabase.auth.signOut();
     setDone(true);
     setTimeout(() => navigate("/login"), 2000);
   };
@@ -86,6 +95,21 @@ export default function RestablecerPage() {
             <p className="text-foreground font-semibold">
               Contraseña actualizada. Redirigiendo al login…
             </p>
+          </div>
+        ) : expired ? (
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle size={40} className="text-destructive" />
+            </div>
+            <p className="text-foreground font-semibold">
+              El enlace es inválido o ya venció.
+            </p>
+            <button
+              onClick={() => navigate("/recuperar")}
+              className="touch-target w-full py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90"
+            >
+              Solicitar nuevo enlace
+            </button>
           </div>
         ) : !ready ? (
           <div className="flex items-center justify-center py-8">
