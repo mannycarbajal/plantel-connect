@@ -15,7 +15,7 @@ import logo from "@/assets/logos-faz-plantel.png";
 
 type MotivoSolicitud = "desempleo" | "separacion" | "defuncion" | "otro";
 type FileUploadStatus = "pending" | "uploading" | "done" | "error";
-type TrackedFile = { file: File; status: FileUploadStatus; error?: string };
+type TrackedFile = { file: File; status: FileUploadStatus; error?: string; uploadFailed?: boolean };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_DOCS = 10;
@@ -84,6 +84,8 @@ export default function NuevaSolicitudPage() {
   const [escritoError, setEscritoError] = useState("");
   const [documentos, setDocumentos] = useState<TrackedFile[]>([]);
   const [docError, setDocError] = useState("");
+  const [pendingSolId, setPendingSolId] = useState<string | null>(null);
+  const [failedCount, setFailedCount] = useState(0);
   const escritoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
@@ -112,6 +114,8 @@ export default function NuevaSolicitudPage() {
     setDocumentos([]);
     setDocError("");
     setSubmitError("");
+    setPendingSolId(null);
+    setFailedCount(0);
   };
 
   // --- Inactivity auto-reset (3 min) with 20s warning ---
@@ -216,6 +220,59 @@ export default function NuevaSolicitudPage() {
     e.target.value = "";
   };
 
+  const UPLOAD_FAIL_MSG = "No se pudo subir el archivo, revise su conexión e intente de nuevo";
+
+  const uploadOne = async (solId: string, file: File, folder: string, tipo: string) => {
+    const ext = getExt(file.name);
+    const path = `${solId}/${folder}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await publicClient.storage.from("documentos").upload(path, file);
+    if (upErr) throw upErr;
+    const { error: insErr } = await publicClient.from("documentos").insert({
+      solicitud_id: solId,
+      nombre: file.name,
+      tipo,
+      file_path: path
+    });
+    if (insErr) throw insErr;
+  };
+
+  // Uploads escrito + documents; onlyFailed=true retries only previously failed uploads.
+  // Returns number of failed files.
+  const uploadFiles = async (solId: string, onlyFailed: boolean): Promise<number> => {
+    let failed = 0;
+    const shouldUploadEscrito = escritoLibre && (onlyFailed ? escritoStatus === "error" : true);
+    if (escritoLibre && shouldUploadEscrito) {
+      setEscritoStatus("uploading");
+      setEscritoError("");
+      try {
+        await uploadOne(solId, escritoLibre, "escrito-libre", "escrito_libre");
+        setEscritoStatus("done");
+      } catch (err: any) {
+        console.error("Upload escrito libre error:", err);
+        failed++;
+        setEscritoStatus("error");
+        setEscritoError(UPLOAD_FAIL_MSG);
+      }
+    }
+
+    for (let i = 0; i < documentos.length; i++) {
+      const tracked = documentos[i];
+      if (onlyFailed) {
+        if (!(tracked.status === "error" && tracked.uploadFailed)) continue;
+      } else if (tracked.status === "error") continue;
+      setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading", error: undefined } : d));
+      try {
+        await uploadOne(solId, tracked.file, "comprobatorios", "comprobatorio");
+        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "done", uploadFailed: false } : d));
+      } catch (err: any) {
+        console.error("Upload comprobatorio error:", tracked.file.name, err);
+        failed++;
+        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "error", error: UPLOAD_FAIL_MSG, uploadFailed: true } : d));
+      }
+    }
+    return failed;
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
@@ -248,60 +305,44 @@ export default function NuevaSolicitudPage() {
 
       if (solErr) {
         console.error("Insert solicitud error:", solErr.code, solErr.message, solErr.details, solErr.hint);
-        throw new Error(solErr.message);
+        throw solErr;
       }
 
-      // Upload escrito libre (sequential, own controller)
-      if (escritoLibre) {
-        setEscritoStatus("uploading");
-        try {
-          const ext = getExt(escritoLibre.name);
-          const path = `${solId}/escrito-libre/${crypto.randomUUID()}.${ext}`;
-          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, escritoLibre);
-          if (upErr) throw upErr;
-          await publicClient.from("documentos").insert({
-            solicitud_id: solId,
-            nombre: escritoLibre.name,
-            tipo: "escrito_libre",
-            file_path: path
-          });
-          setEscritoStatus("done");
-        } catch (err: any) {
-          setEscritoStatus("error");
-          setEscritoError(err.message || "Error al subir escrito libre");
-        }
-      }
-
-      // Upload documents SEQUENTIALLY
-      for (let i = 0; i < documentos.length; i++) {
-        const tracked = documentos[i];
-        if (tracked.status === "error") continue;
-        // Update status to uploading
-        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading" } : d));
-        try {
-          const ext = getExt(tracked.file.name);
-          const path = `${solId}/comprobatorios/${crypto.randomUUID()}.${ext}`;
-          const { error: upErr } = await publicClient.storage.from("documentos").upload(path, tracked.file);
-          if (upErr) throw upErr;
-          await publicClient.from("documentos").insert({
-            solicitud_id: solId,
-            nombre: tracked.file.name,
-            tipo: "comprobatorio",
-            file_path: path
-          });
-          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "done" } : d));
-        } catch (err: any) {
-          setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "error", error: err.message || "Error al subir" } : d));
-          // Continue with next file, don't abort
-        }
-      }
+      const failed = await uploadFiles(solId, false);
 
       // Audit trail — use publicClient to avoid RLS issues
       await logAuditEvent(solId, "solicitud_creada", form.tutorEmail, "solicitante", publicClient);
 
-      setSubmitted(true);
+      if (failed > 0) {
+        setPendingSolId(solId);
+        setFailedCount(failed);
+      } else {
+        setSubmitted(true);
+      }
     } catch (err: any) {
-      setSubmitError(err.message || "Error al enviar la solicitud.");
+      console.error("Submit error:", err);
+      setSubmitError("No se pudo enviar la solicitud, revise su conexión e intente de nuevo");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    if (!pendingSolId) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const failed = await uploadFiles(pendingSolId, true);
+      if (failed > 0) {
+        setFailedCount(failed);
+      } else {
+        setPendingSolId(null);
+        setFailedCount(0);
+        setSubmitted(true);
+      }
+    } catch (err: any) {
+      console.error("Retry error:", err);
+      setSubmitError(UPLOAD_FAIL_MSG);
     } finally {
       setSubmitting(false);
     }
@@ -354,6 +395,7 @@ export default function NuevaSolicitudPage() {
       }
 
       <div className="space-y-6">
+        <fieldset disabled={!!pendingSolId} className="space-y-6 min-w-0 disabled:opacity-70">
         {/* Student Info */}
         <section className="bg-card rounded-xl border p-6 shadow-sm">
           <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Datos del Alumno</h3>
@@ -742,6 +784,7 @@ export default function NuevaSolicitudPage() {
             </div>
           }
         </section>
+        </fieldset>
 
         {submitError &&
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
@@ -749,6 +792,20 @@ export default function NuevaSolicitudPage() {
           </div>
         }
 
+        {pendingSolId ? (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 space-y-3">
+            <p className="text-destructive text-sm font-semibold">
+              Su solicitud se registró, pero {failedCount} archivo(s) no se pudieron subir
+            </p>
+            <button
+              onClick={handleRetry}
+              disabled={submitting}
+              className="touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+              {submitting ? "Subiendo..." : "Reintentar archivos"}
+            </button>
+          </div>
+        ) : (
+        <>
         {/* Submit */}
         <button
           onClick={handleSubmit}
@@ -765,6 +822,8 @@ export default function NuevaSolicitudPage() {
           className="touch-target w-full py-3 rounded-xl border-2 border-border text-foreground font-heading font-semibold hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           Limpiar formulario
         </button>
+        </>
+        )}
       </div>
 
       {showIdleWarning && !submitting && !submitted && (
