@@ -124,7 +124,7 @@ export default function NuevaSolicitudPage() {
   const idleRef = useRef(0);
 
   useEffect(() => {
-    if (submitting || submitted) return;
+    if (submitting || submitted || pendingSolId) return;
     const resetIdle = () => {
       idleRef.current = 0;
       setIdleSeconds(0);
@@ -133,10 +133,10 @@ export default function NuevaSolicitudPage() {
     const events = ["input", "click", "keydown", "touchstart"];
     events.forEach((e) => window.addEventListener(e, resetIdle));
     return () => events.forEach((e) => window.removeEventListener(e, resetIdle));
-  }, [submitting, submitted]);
+  }, [submitting, submitted, pendingSolId]);
 
   useEffect(() => {
-    if (submitting || submitted) return;
+    if (submitting || submitted || pendingSolId) return;
     const id = setInterval(() => {
       idleRef.current += 1;
       const s = idleRef.current;
@@ -149,7 +149,7 @@ export default function NuevaSolicitudPage() {
       }
     }, 1000);
     return () => clearInterval(id);
-  }, [submitting, submitted]);
+  }, [submitting, submitted, pendingSolId]);
 
   // --- Success screen auto-return after 60s ---
   const [successCountdown, setSuccessCountdown] = useState(60);
