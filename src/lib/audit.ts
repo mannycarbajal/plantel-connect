@@ -11,22 +11,13 @@ export async function logAuditEvent(
   const db = client ?? supabase;
   const deviceName = navigator.userAgent;
 
-  let ipAddress = "unknown";
-  try {
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    ipAddress = data.ip;
-  } catch {
-    // ignore
-  }
-
   await db.from("audit_trail").insert({
     solicitud_id: solicitudId,
     action,
     user_email: userEmail ?? null,
     user_role: userRole ?? null,
     device_name: deviceName,
-    ip_address: ipAddress,
+    ip_address: null,
   } as any);
 }
 
