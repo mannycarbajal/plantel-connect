@@ -20,16 +20,27 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
   const { user, isAuthenticated, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user && !allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const loading = false; // el kiosco (/nueva-solicitud) no debe esperar la sesión central
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
 
   const ROLE_HOME: Record<string, string> = {
     revisor: "/revisor/pendientes",
@@ -43,16 +54,45 @@ function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/nueva-solicitud" element={<NuevaSolicitudPage />} />
 
-      <Route path="/login" element={
-        isAuthenticated && user ? <Navigate to={ROLE_HOME[user.role] ?? "/"} replace /> : <LoginPage />
-      } />
+      <Route
+        path="/login"
+        element={isAuthenticated && user ? <Navigate to={ROLE_HOME[user.role] ?? "/"} replace /> : <LoginPage />}
+      />
       <Route path="/recuperar" element={<RecuperarPage />} />
       <Route path="/restablecer" element={<RestablecerPage />} />
 
-      <Route path="/revisor/pendientes" element={<ProtectedRoute allowedRoles={["revisor", "direccion"]}><RevisorPage /></ProtectedRoute>} />
-      <Route path="/enlace/pendientes" element={<ProtectedRoute allowedRoles={["enlace", "direccion"]}><EnlacePage /></ProtectedRoute>} />
-      <Route path="/direccion/panel" element={<ProtectedRoute allowedRoles={["direccion"]}><DireccionPage /></ProtectedRoute>} />
-      <Route path="/comite/panel" element={<ProtectedRoute allowedRoles={["comite", "direccion"]}><ComitePage /></ProtectedRoute>} />
+      <Route
+        path="/revisor/pendientes"
+        element={
+          <ProtectedRoute allowedRoles={["revisor", "direccion"]}>
+            <RevisorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/enlace/pendientes"
+        element={
+          <ProtectedRoute allowedRoles={["enlace", "direccion"]}>
+            <EnlacePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/direccion/panel"
+        element={
+          <ProtectedRoute allowedRoles={["direccion"]}>
+            <DireccionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/comite/panel"
+        element={
+          <ProtectedRoute allowedRoles={["comite", "direccion"]}>
+            <ComitePage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
