@@ -588,8 +588,8 @@ export default function NuevaSolicitudPage() {
                     }
                     className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value={-1}>Seleccione...</option>
-                    {form.aportacionActual === 300 && <option value={0}>$0 MXN (sin aportación)</option>}
+                    <option value={0}>Seleccione...</option>
+
                     {APORTACIONES.map((a) => (
                       <option key={a.value} value={a.value}>
                         {a.label}
@@ -610,7 +610,8 @@ export default function NuevaSolicitudPage() {
                     onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
                     className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value={0}>Seleccione...</option>
+                    <option value={-1}>Seleccione...</option>
+                    {form.aportacionActual === 300 && <option value={0}>$0 MXN (sin aportación)</option>}
                     {APORTACIONES.filter(
                       (a) =>
                         !form.aportacionActual ||
