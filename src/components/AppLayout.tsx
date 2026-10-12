@@ -11,24 +11,21 @@ const ROLE_LABELS: Record<UserRole, string> = {
   comite: "Comité",
 };
 
-const NAV_ITEMS: Record<UserRole, {path: string;label: string;icon: React.ElementType;}[]> = {
-  revisor: [
-  { path: "/revisor/pendientes", label: "Solicitudes Pendientes", icon: ClipboardCheck }],
+const NAV_ITEMS: Record<UserRole, { path: string; label: string; icon: React.ElementType }[]> = {
+  revisor: [{ path: "/revisor/pendientes", label: "Solicitudes Pendientes", icon: ClipboardCheck }],
 
-  enlace: [
-  { path: "/enlace/pendientes", label: "Solicitudes Asignadas", icon: Link2 }],
+  enlace: [{ path: "/enlace/pendientes", label: "Solicitudes Asignadas", icon: Link2 }],
 
   direccion: [
-  { path: "/direccion/panel", label: "Panel de Solicitudes", icon: ShieldCheck },
-  { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
-  { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
-  { path: "/comite/panel", label: "Vista Comité", icon: Users }],
+    { path: "/direccion/panel", label: "Panel de Solicitudes", icon: ShieldCheck },
+    { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
+    { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
+    { path: "/comite/panel", label: "Vista Comité", icon: Users },
+  ],
 
-  comite: [
-  { path: "/comite/panel", label: "Casos para Comité", icon: Users }],
-
+  comite: [{ path: "/comite/panel", label: "Casos para Comité", icon: Users }],
 };
-export default function AppLayout({ children }: {children: React.ReactNode;}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,7 +38,11 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-4">
-          <img alt="Fundación Azteca / Plantel Azteca" className="h-10 w-auto" src="/lovable-uploads/7a75dc81-b7b0-425d-b2f2-9bf3439da870.png" />
+          <img
+            alt="Fundación Azteca / Plantel Azteca"
+            className="h-10 w-auto"
+            src="/lovable-uploads/7a75dc81-b7b0-425d-b2f2-9bf3439da870.png"
+          />
           <div className="hidden sm:block">
             <h1 className="font-heading text-lg font-bold leading-tight">Plantel Azteca CDMX</h1>
             <p className="text-sm opacity-80">Gestión de Aportaciones</p>
@@ -53,10 +54,12 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
             <p className="text-xs opacity-80">{ROLE_LABELS[user.role]}</p>
           </div>
           <button
-            onClick={async () => { await logout(); }}
+            onClick={async () => {
+              await logout();
+            }}
             className="touch-target flex items-center justify-center rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors p-3"
-            aria-label="Cerrar sesión">
-
+            aria-label="Cerrar sesión"
+          >
             <LogOut size={22} />
           </button>
         </div>
@@ -70,23 +73,21 @@ export default function AppLayout({ children }: {children: React.ReactNode;}) {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={`touch-target flex items-center gap-2 px-5 py-3 rounded-lg font-heading font-medium text-sm transition-colors whitespace-nowrap
-                ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-muted"}`}>
-
+                ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-muted"}`}
+            >
               <item.icon size={20} />
               {item.label}
-            </button>);
-
+            </button>
+          );
         })}
       </nav>
 
-      <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full animate-fade-in">
-        {children}
-      </main>
+      <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full animate-fade-in">{children}</main>
 
       <footer className="bg-muted text-muted-foreground text-center text-xs py-3 font-body">
         © 2026 Fundación Azteca de Grupo Salinas — Plantel Azteca CDMX
-        <span className="block text-muted-foreground/60 mt-0.5">v1.1.0</span>
+        <span className="block text-muted-foreground/60 mt-0.5">v1.2.0</span>
       </footer>
-    </div>);
-
+    </div>
+  );
 }
