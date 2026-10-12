@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { centralSupabase as supabase } from "@/integrations/supabase/centralClient";
 
 export type SolicitudRow = {
   id: string;
@@ -41,7 +41,7 @@ export type DocumentoRow = {
 };
 
 export async function fetchSolicitudes(statusIn?: string[]): Promise<SolicitudRow[]> {
-  let q = supabase.from("solicitudes").select("*").order("created_at", { ascending: false });
+  let q = supabase.from("contrib_solicitudes").select("*").order("created_at", { ascending: false });
   if (statusIn && statusIn.length > 0) {
     q = q.in("status", statusIn);
   }
@@ -52,7 +52,7 @@ export async function fetchSolicitudes(statusIn?: string[]): Promise<SolicitudRo
 
 export async function fetchSolicitudesForEnlace(userId: string): Promise<SolicitudRow[]> {
   const { data, error } = await supabase
-    .from("solicitudes")
+    .from("contrib_solicitudes")
     .select("*")
     .eq("status", "enviada_enlace")
     .eq("enlace_asignado", userId)
@@ -63,7 +63,7 @@ export async function fetchSolicitudesForEnlace(userId: string): Promise<Solicit
 
 export async function fetchDocumentos(solicitudId: string): Promise<DocumentoRow[]> {
   const { data, error } = await supabase
-    .from("documentos")
+    .from("contrib_documentos")
     .select("*")
     .eq("solicitud_id", solicitudId)
     .order("uploaded_at");
@@ -72,28 +72,40 @@ export async function fetchDocumentos(solicitudId: string): Promise<DocumentoRow
 }
 
 export async function getDocumentUrl(filePath: string): Promise<string> {
-  const { data } = await supabase.storage.from("documentos").createSignedUrl(filePath, 3600);
+  const { data } = await supabase.storage.from("contrib-documentos").createSignedUrl(filePath, 3600);
   return data?.signedUrl ?? "";
 }
 
 export async function updateSolicitudStatus(
   id: string,
   status: string,
-  extras: Record<string, any> = {}
+  extras: Record<string, any> = {},
 ): Promise<void> {
   const { error } = await supabase
-    .from("solicitudes")
+    .from("contrib_solicitudes")
     .update({ status, ...extras })
     .eq("id", id);
   if (error) throw error;
 }
 
-// Map nivel+turno to enlace user
+// Enlace asignado por nivel/turno (tabla contrib_enlaces en el Supabase central)
+export async function fetchEnlaceUserId(nivel: string, turno: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("contrib_enlaces")
+    .select("user_id")
+    .eq("nivel", nivel)
+    .eq("turno", turno)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.user_id ?? null;
+}
+
+// Map nivel+turno to enlace user (obsoleto: usar fetchEnlaceUserId)
 const ENLACE_EMAILS: Record<string, string> = {
-  "Bachillerato_Matutino": "ruben.carbajal@fundacionazteca.org",
-  "Bachillerato_Vespertino": "ruben.carbajal@fundacionazteca.org",
-  "Secundaria_Matutino": "claudia.cruz@fundacionazteca.org",
-  "Secundaria_Vespertino": "maria.lopez@fundacionazteca.org",
+  Bachillerato_Matutino: "ruben.carbajal@fundacionazteca.org",
+  Bachillerato_Vespertino: "ruben.carbajal@fundacionazteca.org",
+  Secundaria_Matutino: "claudia.cruz@fundacionazteca.org",
+  Secundaria_Vespertino: "maria.lopez@fundacionazteca.org",
 };
 
 export async function getEnlaceUserId(nivel: string, turno: string): Promise<string | null> {
@@ -105,8 +117,11 @@ export async function getEnlaceUserId(nivel: string, turno: string): Promise<str
   // Since we can't query auth.users from client, we store email->role in user_roles
   // We'll use a helper: get all enlace users and match by checking auth metadata
   // For now, use the seed data to map
-  const { data } = await supabase.rpc("has_role", { _user_id: "00000000-0000-0000-0000-000000000000", _role: "enlace" as any });
-  
+  const { data } = await supabase.rpc("has_role", {
+    _user_id: "00000000-0000-0000-0000-000000000000",
+    _role: "enlace" as any,
+  });
+
   // Workaround: we stored the mapping, let's query user_roles for enlace users
   // and then we need to know which one. Since we can't get email from client,
   // we'll use an edge function.
