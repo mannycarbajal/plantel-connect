@@ -24,13 +24,14 @@ const MOTIVO_LABELS: Record<string, string> = {
 
 export default function RevisorPage() {
   const { user } = useAuth();
-  const isReadOnly = user?.role === "direccion";
+  const isReadOnly = user?.role === "direccion" && !user?.isMaster;
   const [solicitudes, setSolicitudes] = useState<SolicitudRow[]>([]);
   const [selected, setSelected] = useState<SolicitudRow | null>(null);
   const [docs, setDocs] = useState<DocumentoRow[]>([]);
   const [comentarios, setComentarios] = useState("");
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -63,7 +64,9 @@ export default function RevisorPage() {
 
   const handleSendToEnlace = async () => {
     if (!selected) return;
+    if (!window.confirm("¿Enviar esta solicitud al enlace de nivel?")) return;
     setActing(true);
+    setActionError("");
     try {
       // Get the enlace user ID
       const enlaceUserId = await fetchEnlaceUserId(selected.nivel, selected.turno);
@@ -80,13 +83,18 @@ export default function RevisorPage() {
       await load();
     } catch (e) {
       console.error(e);
+      setActionError(
+        e instanceof Error ? e.message : "No se pudo guardar la acción. Revise su conexión e intente de nuevo.",
+      );
     }
     setActing(false);
   };
 
   const handleReject = async () => {
     if (!selected) return;
+    if (!window.confirm("¿Rechazar esta solicitud?")) return;
     setActing(true);
+    setActionError("");
     try {
       await updateSolicitudStatus(selected.id, "rechazada", {
         comentarios_revisor: comentarios || "Documentación incompleta.",
@@ -99,6 +107,9 @@ export default function RevisorPage() {
       await load();
     } catch (e) {
       console.error(e);
+      setActionError(
+        e instanceof Error ? e.message : "No se pudo guardar la acción. Revise su conexión e intente de nuevo.",
+      );
     }
     setActing(false);
   };
@@ -114,6 +125,12 @@ export default function RevisorPage() {
         <h2 className="font-heading text-2xl font-bold text-foreground">Solicitudes Pendientes de Revisión</h2>
         <p className="text-muted-foreground mt-1">{solicitudes.length} solicitud(es) por revisar</p>
       </div>
+
+      {actionError && (
+        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
+          {actionError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
