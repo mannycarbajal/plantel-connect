@@ -222,12 +222,42 @@ export default function NuevaSolicitudPage() {
     e.target.value = "";
   };
 
+  const prepareImage = async (file: File): Promise<{ blob: Blob; ext: string; compressed: boolean }> => {
+    const ext = getExt(file.name);
+    const original = { blob: file as Blob, ext, compressed: false };
+    // Solo fotos grandes (>3 MB): se reduce a máx. 3000 px y calidad 0.9 para que el texto siga legible.
+    if (!["jpg", "jpeg", "png"].includes(ext) || file.size <= 3 * 1024 * 1024) return original;
+    try {
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(1, 3000 / Math.max(bmp.width, bmp.height));
+      const w = Math.round(bmp.width * scale);
+      const h = Math.round(bmp.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return original;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close();
+      const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.9));
+      if (blob && blob.size < file.size * 0.9) return { blob, ext: "jpg", compressed: true };
+    } catch (e) {
+      console.warn("Compresión omitida, se sube el original:", e);
+    }
+    return original;
+  };
+
   const UPLOAD_FAIL_MSG = "No se pudo subir el archivo, revise su conexión e intente de nuevo";
 
   const uploadOne = async (solId: string, file: File, folder: string, tipo: string) => {
     const ext = getExt(file.name);
-    const path = `${solId}/${folder}/${crypto.randomUUID()}.${ext}`;
-    const { error: upErr } = await publicClient.storage.from("documentos").upload(path, file);
+    const prepared = await prepareImage(file);
+    const path = `${solId}/${folder}/${crypto.randomUUID()}.${prepared.ext}`;
+    const { error: upErr } = await publicClient.storage
+      .from("documentos")
+      .upload(path, prepared.blob, prepared.compressed ? { contentType: "image/jpeg" } : undefined);
     if (upErr) throw upErr;
     const { error: insErr } = await publicClient.from("documentos").insert({
       solicitud_id: solId,
