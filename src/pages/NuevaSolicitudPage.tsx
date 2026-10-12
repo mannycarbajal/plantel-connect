@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 // Public client without any active session — bypasses authenticated user RLS issues
 const publicClient = createClient(CENTRAL_SUPABASE_URL, CENTRAL_SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
+  auth: { persistSession: false, autoRefreshToken: false, storageKey: "contrib-kiosk-anon" },
 });
 import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit";
