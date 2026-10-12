@@ -66,7 +66,12 @@ export default function ComitePage() {
     setActionError("");
     try {
       await updateSolicitudStatus(selected.id, action, {
-        comentarios_direccion: comentarios || `Resuelto por Comité: ${action}.`,
+        comentarios_direccion: [
+          selected.comentarios_direccion,
+          "Comité (" + action + "): " + (comentarios || "sin comentarios adicionales."),
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
         fecha_resolucion: new Date().toISOString(),
       });
       await logAuditEvent(selected.id, `${action}_comite`, user?.email, "comite");
@@ -247,7 +252,7 @@ export default function ComitePage() {
                         <div key={d.id} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2">
                           <FileText size={16} className="text-primary shrink-0" />
                           <span className="text-foreground flex-1 truncate">{d.nombre}</span>
-                          <button onClick={() => openDoc(d.file_path)} className="text-primary">
+                          <button onClick={() => openDoc(d.file_path, d.nombre)} className="text-primary">
                             <ExternalLink size={14} />
                           </button>
                           <button onClick={() => downloadDoc(d.file_path, d.nombre)} className="text-primary">
