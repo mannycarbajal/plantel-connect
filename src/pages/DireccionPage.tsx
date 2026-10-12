@@ -263,7 +263,7 @@ export default function DireccionPage() {
                       {docs.map((d) => (
                         <button
                           key={d.id}
-                          onClick={() => openDoc(d.file_path)}
+                          onClick={() => openDoc(d.file_path, d.nombre)}
                           className="w-full flex items-center gap-2 bg-muted rounded-lg px-3 py-2 hover:bg-muted/80 transition-colors text-left"
                         >
                           <FileText size={16} className="text-primary shrink-0" />
