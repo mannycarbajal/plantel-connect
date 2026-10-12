@@ -36,7 +36,9 @@ export default function LoginPage() {
 
     // After login, check user from context — need to fetch profile from central
     const { centralSupabase } = await import("@/integrations/supabase/centralClient");
-    const { data: { user } } = await centralSupabase.auth.getUser();
+    const {
+      data: { user },
+    } = await centralSupabase.auth.getUser();
 
     if (user) {
       const { data: profile } = await centralSupabase
@@ -111,12 +113,8 @@ export default function LoginPage() {
       >
         <div className="flex flex-col items-center mb-8">
           <img src={logo} alt="Fundación Azteca / Plantel Azteca" className="h-16 w-auto mb-4" />
-          <h1 className="font-heading text-2xl font-bold text-foreground text-center">
-            Plantel Azteca CDMX
-          </h1>
-          <p className="text-muted-foreground text-center mt-1">
-            Acceso Personal Autorizado
-          </p>
+          <h1 className="font-heading text-2xl font-bold text-foreground text-center">Plantel Azteca CDMX</h1>
+          <p className="text-muted-foreground text-center mt-1">Acceso Personal Autorizado</p>
         </div>
 
         <div className="space-y-4 mb-6">
@@ -125,7 +123,7 @@ export default function LoginPage() {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="correo@fundacionazteca.org"
             />
@@ -135,8 +133,8 @@ export default function LoginPage() {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="••••••••"
             />
@@ -148,17 +146,16 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {error && (
-          <p className="text-destructive text-sm font-semibold mb-4 text-center">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm font-semibold mb-4 text-center">{error}</p>}
 
         <button
           onClick={handleLogin}
           disabled={loading || !email || !password}
           className={`touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all flex items-center justify-center gap-2
-            ${email && password && !loading
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
+            ${
+              email && password && !loading
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
             }`}
         >
           {loading && <Loader2 size={20} className="animate-spin" />}
@@ -166,7 +163,7 @@ export default function LoginPage() {
         </button>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2026 Fundación Azteca de Grupo Salinas
+          © 2026 Fundación Azteca de Grupo Salinas · v1.2.0
         </p>
       </motion.div>
     </div>
