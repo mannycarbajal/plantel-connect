@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { CENTRAL_SUPABASE_URL, CENTRAL_SUPABASE_ANON_KEY } from "@/integrations/supabase/centralClient";
 import { motion } from "framer-motion";
 
 // Public client without any active session — bypasses authenticated user RLS issues
-const publicClient = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
+const publicClient = createClient(CENTRAL_SUPABASE_URL, CENTRAL_SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
@@ -256,10 +256,10 @@ export default function NuevaSolicitudPage() {
     const prepared = await prepareImage(file);
     const path = `${solId}/${folder}/${crypto.randomUUID()}.${prepared.ext}`;
     const { error: upErr } = await publicClient.storage
-      .from("documentos")
+      .from("contrib-documentos")
       .upload(path, prepared.blob, prepared.compressed ? { contentType: "image/jpeg" } : undefined);
     if (upErr) throw upErr;
-    const { error: insErr } = await publicClient.from("documentos").insert({
+    const { error: insErr } = await publicClient.from("contrib_documentos").insert({
       solicitud_id: solId,
       nombre: file.name,
       tipo,
@@ -317,7 +317,7 @@ export default function NuevaSolicitudPage() {
       const solId = crypto.randomUUID();
 
       // Insert solicitud (no .select() to avoid SELECT policy check for anon)
-      const { error: solErr } = await publicClient.from("solicitudes").insert({
+      const { error: solErr } = await publicClient.from("contrib_solicitudes").insert({
         id: solId,
         alumno_nombre: form.alumnoNombre,
         matricula: form.matricula,
