@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/AppLayout";
+import AppLayout, { useDocViewer } from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, FileText, Users, ExternalLink, Loader2 } from "lucide-react";
@@ -91,13 +91,11 @@ export default function DireccionPage() {
     setActing(false);
   };
 
-  const openDoc = async (filePath: string) => {
-    const url = await getDocumentUrl(filePath);
-    if (url) window.open(url, "_blank");
-  };
+  const { openDoc, viewer } = useDocViewer();
 
   return (
     <AppLayout>
+      {viewer}
       <div className="mb-6">
         <h2 className="font-heading text-2xl font-bold text-foreground">Panel de Dirección Operativa</h2>
         <p className="text-muted-foreground mt-1">Analice y resuelva las solicitudes de ajuste.</p>
