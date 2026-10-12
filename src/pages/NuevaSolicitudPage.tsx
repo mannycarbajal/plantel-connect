@@ -70,7 +70,7 @@ export default function NuevaSolicitudPage() {
     tutorTelefono: "",
     tutorEmail: "",
     aportacionActual: 0,
-    aportacionPropuesta: 0,
+    aportacionPropuesta: -1,
     motivo: "" as MotivoSolicitud | "",
     motivoDetalle: "",
     tieneAdeudo: false,
@@ -100,7 +100,7 @@ export default function NuevaSolicitudPage() {
       tutorTelefono: "",
       tutorEmail: "",
       aportacionActual: 0,
-      aportacionPropuesta: 0,
+      aportacionPropuesta: -1,
       motivo: "" as MotivoSolicitud | "",
       motivoDetalle: "",
       tieneAdeudo: false,
@@ -194,7 +194,7 @@ export default function NuevaSolicitudPage() {
     isValidPhone &&
     isValidEmail &&
     form.aportacionActual &&
-    form.aportacionPropuesta &&
+    form.aportacionPropuesta >= 0 &&
     form.motivo &&
     form.motivoDetalle &&
     !!escritoLibre &&
@@ -580,11 +580,16 @@ export default function NuevaSolicitudPage() {
                   <select
                     value={form.aportacionActual}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, aportacionActual: Number(e.target.value), aportacionPropuesta: 0 }))
+                      setForm((prev) => ({
+                        ...prev,
+                        aportacionActual: Number(e.target.value),
+                        aportacionPropuesta: -1,
+                      }))
                     }
                     className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value={0}>Seleccione...</option>
+                    <option value={-1}>Seleccione...</option>
+                    {form.aportacionActual === 300 && <option value={0}>$0 MXN (sin aportación)</option>}
                     {APORTACIONES.map((a) => (
                       <option key={a.value} value={a.value}>
                         {a.label}
