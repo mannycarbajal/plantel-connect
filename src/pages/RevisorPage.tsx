@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/AppLayout";
+import AppLayout, { useDocViewer } from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircle, FileText, Send, ExternalLink, Loader2 } from "lucide-react";
@@ -114,13 +114,11 @@ export default function RevisorPage() {
     setActing(false);
   };
 
-  const openDoc = async (filePath: string) => {
-    const url = await getDocumentUrl(filePath);
-    if (url) window.open(url, "_blank");
-  };
+  const { openDoc, viewer } = useDocViewer();
 
   return (
     <AppLayout>
+      {viewer}
       <div className="mb-6">
         <h2 className="font-heading text-2xl font-bold text-foreground">Solicitudes Pendientes de Revisión</h2>
         <p className="text-muted-foreground mt-1">{solicitudes.length} solicitud(es) por revisar</p>
