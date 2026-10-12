@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/AppLayout";
+import AppLayout, { useDocViewer } from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, FileText, Download, ExternalLink, Loader2 } from "lucide-react";
@@ -80,10 +80,7 @@ export default function ComitePage() {
     setActing(false);
   };
 
-  const openDoc = async (filePath: string) => {
-    const url = await getDocumentUrl(filePath);
-    if (url) window.open(url, "_blank");
-  };
+  const { openDoc, viewer } = useDocViewer();
 
   const downloadDoc = async (filePath: string, nombre: string) => {
     const url = await getDocumentUrl(filePath);
@@ -98,6 +95,7 @@ export default function ComitePage() {
 
   return (
     <AppLayout>
+      {viewer}
       <div className="mb-6">
         <h2 className="font-heading text-2xl font-bold text-foreground">Casos para Comité</h2>
         <p className="text-muted-foreground mt-1">
