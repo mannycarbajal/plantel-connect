@@ -1,7 +1,8 @@
 import React from "react";
+import { getDocumentUrl } from "@/lib/solicitudes";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users } from "lucide-react";
+import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users, X, ExternalLink } from "lucide-react";
 import logo from "@/assets/logos-faz-plantel.png";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -90,4 +91,83 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </footer>
     </div>
   );
+}
+
+export function useDocViewer() {
+  const [doc, setDoc] = React.useState<{ url: string; name: string } | null>(null);
+  const [err, setErr] = React.useState("");
+  const close = React.useCallback(() => {
+    setDoc(null);
+    setErr("");
+  }, []);
+
+  React.useEffect(() => {
+    if (!doc && !err) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [doc, err, close]);
+
+  const openDoc = async (filePath: string, nombre?: string) => {
+    setErr("");
+    try {
+      const url = await getDocumentUrl(filePath);
+      if (!url) throw new Error("sin url");
+      setDoc({ url, name: nombre ?? filePath.split("/").pop() ?? "Documento" });
+    } catch (e) {
+      console.error(e);
+      setErr("No se pudo abrir el documento. Intente de nuevo.");
+    }
+  };
+
+  const isPdf = doc ? /\.pdf$/i.test(doc.url.split("?")[0]) : false;
+
+  const viewer =
+    doc || err ? (
+      <div className="fixed inset-0 z-50 flex flex-col bg-black/85" role="dialog" aria-modal="true" onClick={close}>
+        <div
+          className="flex items-center justify-between gap-3 bg-primary px-4 py-3 text-primary-foreground"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="truncate font-heading font-semibold">{doc ? doc.name : "Documento"}</p>
+          <div className="flex items-center gap-2">
+            {doc && (
+              <a
+                href={doc.url}
+                target="_blank"
+                rel="noreferrer"
+                className="touch-target flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-4 py-2 text-sm hover:bg-primary-foreground/20"
+              >
+                <ExternalLink size={16} /> Nueva pestaña
+              </a>
+            )}
+            <button
+              onClick={close}
+              className="touch-target flex items-center gap-2 rounded-lg bg-primary-foreground/20 px-4 py-2 font-semibold hover:bg-primary-foreground/30"
+              aria-label="Cerrar vista previa"
+            >
+              <X size={20} /> Cerrar
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center overflow-auto p-2" onClick={(e) => e.stopPropagation()}>
+          {err ? (
+            <p className="rounded-xl bg-card p-6 font-semibold text-destructive">{err}</p>
+          ) : isPdf ? (
+            <iframe src={doc!.url} title={doc!.name} className="h-full w-full rounded-lg bg-white" />
+          ) : (
+            <img src={doc!.url} alt={doc!.name} className="max-h-full max-w-full object-contain" />
+          )}
+        </div>
+      </div>
+    ) : null;
+
+  return { openDoc, viewer };
 }
