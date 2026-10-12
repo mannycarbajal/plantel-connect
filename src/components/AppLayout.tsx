@@ -2,7 +2,7 @@ import React from "react";
 import { getDocumentUrl } from "@/lib/solicitudes";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users, X, ExternalLink } from "lucide-react";
+import { LogOut, ClipboardCheck, ShieldCheck, Link2, Users, UserCog, X, ExternalLink } from "lucide-react";
 import logo from "@/assets/logos-faz-plantel.png";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -22,6 +22,7 @@ const NAV_ITEMS: Record<UserRole, { path: string; label: string; icon: React.Ele
     { path: "/revisor/pendientes", label: "Vista Revisor", icon: ClipboardCheck },
     { path: "/enlace/pendientes", label: "Vista Enlace", icon: Link2 },
     { path: "/comite/panel", label: "Vista Comité", icon: Users },
+    { path: "/usuarios", label: "Usuarios", icon: UserCog },
   ],
 
   comite: [{ path: "/comite/panel", label: "Casos para Comité", icon: Users }],
@@ -33,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  const navItems = NAV_ITEMS[user.role] ?? [];
+  const navItems = (NAV_ITEMS[user.role] ?? []).filter((i) => i.path !== "/usuarios" || user.isMaster);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

@@ -11,7 +11,7 @@ import RestablecerPage from "./pages/RestablecerPage";
 import NuevaSolicitudPage from "./pages/NuevaSolicitudPage";
 import RevisorPage from "./pages/RevisorPage";
 import EnlacePage from "./pages/EnlacePage";
-import DireccionPage from "./pages/DireccionPage";
+import DireccionPage, { UsuariosPage } from "./pages/DireccionPage";
 import ComitePage from "./pages/ComitePage";
 
 import NotFound from "./pages/NotFound";
@@ -90,6 +90,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["comite", "direccion"]}>
             <ComitePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/usuarios"
+        element={
+          <ProtectedRoute allowedRoles={["direccion"]}>
+            <UsuariosPage />
           </ProtectedRoute>
         }
       />
