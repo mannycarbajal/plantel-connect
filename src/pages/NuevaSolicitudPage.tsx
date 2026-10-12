@@ -4,11 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
 // Public client without any active session — bypasses authenticated user RLS issues
-const publicClient = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  { auth: { persistSession: false, autoRefreshToken: false } }
-);
+const publicClient = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 import { CheckCircle, Upload, ChevronDown, Camera, X, AlertCircle, FileUp, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit";
 import logo from "@/assets/logos-faz-plantel.png";
@@ -35,19 +33,19 @@ function validateFile(file: File): string | null {
 }
 
 const APORTACIONES = [
-{ value: 1500, label: "$1,500 MXN" },
-{ value: 1000, label: "$1,000 MXN" },
-{ value: 800, label: "$800 MXN" },
-{ value: 500, label: "$500 MXN" },
-{ value: 300, label: "$300 MXN" }];
+  { value: 1500, label: "$1,500 MXN" },
+  { value: 1000, label: "$1,000 MXN" },
+  { value: 800, label: "$800 MXN" },
+  { value: 500, label: "$500 MXN" },
+  { value: 300, label: "$300 MXN" },
+];
 
-
-const MOTIVOS: {value: MotivoSolicitud;label: string;}[] = [
-{ value: "desempleo", label: "Desempleo" },
-{ value: "separacion", label: "Separación conyugal" },
-{ value: "defuncion", label: "Defunción" },
-{ value: "otro", label: "Otro motivo (caso especial)" }];
-
+const MOTIVOS: { value: MotivoSolicitud; label: string }[] = [
+  { value: "desempleo", label: "Desempleo" },
+  { value: "separacion", label: "Separación conyugal" },
+  { value: "defuncion", label: "Defunción" },
+  { value: "otro", label: "Otro motivo (caso especial)" },
+];
 
 const NIVELES = ["Secundaria", "Bachillerato"];
 const TURNOS = ["Matutino", "Vespertino"];
@@ -76,7 +74,7 @@ export default function NuevaSolicitudPage() {
     motivo: "" as MotivoSolicitud | "",
     motivoDetalle: "",
     tieneAdeudo: false,
-    montoAdeudo: 0
+    montoAdeudo: 0,
   });
 
   const [escritoLibre, setEscritoLibre] = useState<File | null>(null);
@@ -106,7 +104,7 @@ export default function NuevaSolicitudPage() {
       motivo: "" as MotivoSolicitud | "",
       motivoDetalle: "",
       tieneAdeudo: false,
-      montoAdeudo: 0
+      montoAdeudo: 0,
     });
     setEscritoLibre(null);
     setEscritoStatus("pending");
@@ -154,7 +152,10 @@ export default function NuevaSolicitudPage() {
   // --- Success screen auto-return after 60s ---
   const [successCountdown, setSuccessCountdown] = useState(60);
   useEffect(() => {
-    if (!submitted) { setSuccessCountdown(60); return; }
+    if (!submitted) {
+      setSuccessCountdown(60);
+      return;
+    }
     const id = setInterval(() => {
       setSuccessCountdown((prev) => {
         if (prev <= 1) {
@@ -183,20 +184,21 @@ export default function NuevaSolicitudPage() {
   const isValidPhone = form.tutorTelefono.length === 10;
 
   const canSubmit =
-  withinWindow &&
-  form.alumnoNombre &&
-  form.matricula &&
-  form.grupo &&
-  form.nivel &&
-  form.turno &&
-  form.tutorNombre &&
-  isValidPhone &&
-  isValidEmail &&
-  form.aportacionActual &&
-  form.aportacionPropuesta &&
-  form.motivo &&
-  form.motivoDetalle &&
-  !!escritoLibre && !escritoError;
+    withinWindow &&
+    form.alumnoNombre &&
+    form.matricula &&
+    form.grupo &&
+    form.nivel &&
+    form.turno &&
+    form.tutorNombre &&
+    isValidPhone &&
+    isValidEmail &&
+    form.aportacionActual &&
+    form.aportacionPropuesta &&
+    form.motivo &&
+    form.motivoDetalle &&
+    !!escritoLibre &&
+    !escritoError;
 
   const handleDocAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -209,7 +211,7 @@ export default function NuevaSolicitudPage() {
       setDocError("");
       const newFiles: TrackedFile[] = Array.from(e.target.files)
         .slice(0, remaining)
-        .map(f => {
+        .map((f) => {
           const err = validateFile(f);
           return err
             ? { file: f, status: "error" as FileUploadStatus, error: err }
@@ -231,7 +233,7 @@ export default function NuevaSolicitudPage() {
       solicitud_id: solId,
       nombre: file.name,
       tipo,
-      file_path: path
+      file_path: path,
     });
     if (insErr) throw insErr;
   };
@@ -260,14 +262,16 @@ export default function NuevaSolicitudPage() {
       if (onlyFailed) {
         if (!(tracked.status === "error" && tracked.uploadFailed)) continue;
       } else if (tracked.status === "error") continue;
-      setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "uploading", error: undefined } : d));
+      setDocumentos((prev) => prev.map((d, j) => (j === i ? { ...d, status: "uploading", error: undefined } : d)));
       try {
         await uploadOne(solId, tracked.file, "comprobatorios", "comprobatorio");
-        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "done", uploadFailed: false } : d));
+        setDocumentos((prev) => prev.map((d, j) => (j === i ? { ...d, status: "done", uploadFailed: false } : d)));
       } catch (err: any) {
         console.error("Upload comprobatorio error:", tracked.file.name, err);
         failed++;
-        setDocumentos(prev => prev.map((d, j) => j === i ? { ...d, status: "error", error: UPLOAD_FAIL_MSG, uploadFailed: true } : d));
+        setDocumentos((prev) =>
+          prev.map((d, j) => (j === i ? { ...d, status: "error", error: UPLOAD_FAIL_MSG, uploadFailed: true } : d)),
+        );
       }
     }
     return failed;
@@ -283,25 +287,23 @@ export default function NuevaSolicitudPage() {
       const solId = crypto.randomUUID();
 
       // Insert solicitud (no .select() to avoid SELECT policy check for anon)
-      const { error: solErr } = await publicClient
-        .from("solicitudes")
-        .insert({
-          id: solId,
-          alumno_nombre: form.alumnoNombre,
-          matricula: form.matricula,
-          grupo: form.grupo,
-          nivel: form.nivel,
-          turno: form.turno,
-          tutor_nombre: form.tutorNombre,
-          tutor_telefono: form.tutorTelefono,
-          tutor_email: form.tutorEmail,
-          aportacion_actual: form.aportacionActual,
-          aportacion_propuesta: form.aportacionPropuesta,
-          motivo: form.motivo,
-          motivo_detalle: form.motivoDetalle,
-          tiene_adeudo: form.tieneAdeudo,
-          monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0
-        });
+      const { error: solErr } = await publicClient.from("solicitudes").insert({
+        id: solId,
+        alumno_nombre: form.alumnoNombre,
+        matricula: form.matricula,
+        grupo: form.grupo,
+        nivel: form.nivel,
+        turno: form.turno,
+        tutor_nombre: form.tutorNombre,
+        tutor_telefono: form.tutorTelefono,
+        tutor_email: form.tutorEmail,
+        aportacion_actual: form.aportacionActual,
+        aportacion_propuesta: form.aportacionPropuesta,
+        motivo: form.motivo,
+        motivo_detalle: form.motivoDetalle,
+        tiene_adeudo: form.tieneAdeudo,
+        monto_adeudo: form.tieneAdeudo ? form.montoAdeudo : 0,
+      });
 
       if (solErr) {
         console.error("Insert solicitud error:", solErr.code, solErr.message, solErr.details, solErr.hint);
@@ -354,8 +356,8 @@ export default function NuevaSolicitudPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center py-20 text-center">
-          
+          className="flex flex-col items-center justify-center py-20 text-center"
+        >
           <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
             <CheckCircle size={48} className="text-success" />
           </div>
@@ -363,16 +365,21 @@ export default function NuevaSolicitudPage() {
           <p className="text-muted-foreground mb-4 max-w-md">
             Su solicitud ha sido registrada exitosamente. El equipo de revisión la analizará en los próximos días.
           </p>
-          <p className="text-xs text-muted-foreground mb-8">Esta pantalla se cerrará automáticamente en {successCountdown} segundos.</p>
+          <p className="text-xs text-muted-foreground mb-8">
+            Esta pantalla se cerrará automáticamente en {successCountdown} segundos.
+          </p>
           <button
-            onClick={() => { resetForm(); setSubmitted(false); }}
-            className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors">
-            
+            onClick={() => {
+              resetForm();
+              setSubmitted(false);
+            }}
+            className="touch-target px-8 py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90 transition-colors"
+          >
             Nueva Solicitud
           </button>
         </motion.div>
-      </PublicLayout>);
-
+      </PublicLayout>
+    );
   }
 
   return (
@@ -382,8 +389,8 @@ export default function NuevaSolicitudPage() {
         <p className="text-muted-foreground mt-1">Complete todos los campos para enviar su solicitud.</p>
       </div>
 
-      {!withinWindow &&
-      <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+      {!withinWindow && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertCircle size={24} className="text-destructive shrink-0 mt-0.5" />
           <div>
             <p className="font-heading font-bold text-destructive">Fuera de periodo de solicitud</p>
@@ -392,405 +399,423 @@ export default function NuevaSolicitudPage() {
             </p>
           </div>
         </div>
-      }
+      )}
 
       <div className="space-y-6">
         <fieldset disabled={!!pendingSolId} className="space-y-6 min-w-0 disabled:opacity-70">
-        {/* Student Info */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Datos del Alumno</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del alumno</label>
-              <input
-                value={form.alumnoNombre}
-                onChange={(e) => set("alumnoNombre", e.target.value)}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Nombre(s), Apellido Paterno, Apellido Materno" />
-
-              
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Matrícula (8 dígitos)</label>
-              <input
-                value={form.matricula}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 8);
-                  set("matricula", v);
-                }}
-                inputMode="numeric"
-                maxLength={8}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Ej: 29123456" />
-              
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Nivel</label>
-              <div className="relative">
-                <select
-                  value={form.nivel}
-                  onChange={(e) => set("nivel", e.target.value)}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  
-                  <option value="">Seleccione...</option>
-                  {NIVELES.map((n) =>
-                  <option key={n} value={n}>
-                      {n}
-                    </option>
-                  )}
-                </select>
-                <ChevronDown
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                
+          {/* Student Info */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Datos del Alumno</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="sm:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del alumno</label>
+                <input
+                  value={form.alumnoNombre}
+                  onChange={(e) => set("alumnoNombre", e.target.value)}
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Nombre(s), Apellido Paterno, Apellido Materno"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Matrícula (8 dígitos)</label>
+                <input
+                  value={form.matricula}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    set("matricula", v);
+                  }}
+                  inputMode="numeric"
+                  maxLength={8}
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Ej: 29123456"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Nivel</label>
+                <div className="relative">
+                  <select
+                    value={form.nivel}
+                    onChange={(e) => set("nivel", e.target.value)}
+                    className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Seleccione...</option>
+                    {NIVELES.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Turno</label>
+                <div className="relative">
+                  <select
+                    value={form.turno}
+                    onChange={(e) => set("turno", e.target.value)}
+                    className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Seleccione...</option>
+                    {TURNOS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Grupo (3-4 dígitos)</label>
+                <input
+                  value={form.grupo}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                    set("grupo", v);
+                  }}
+                  inputMode="numeric"
+                  maxLength={4}
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Ej: 123"
+                />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Turno</label>
-              <div className="relative">
-                <select
-                  value={form.turno}
-                  onChange={(e) => set("turno", e.target.value)}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  
-                  <option value="">Seleccione...</option>
-                  {TURNOS.map((t) =>
-                  <option key={t} value={t}>
-                      {t}
-                    </option>
-                  )}
-                </select>
-                <ChevronDown
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                
+          </section>
+
+          {/* Tutor Info */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Datos del Tutor</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del tutor</label>
+                <input
+                  value={form.tutorNombre}
+                  onChange={(e) => set("tutorNombre", e.target.value)}
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Nombre del tutor"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">
+                  Teléfono de contacto (10 dígitos)
+                </label>
+                <input
+                  value={form.tutorTelefono}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    set("tutorTelefono", v);
+                  }}
+                  type="tel"
+                  inputMode="tel"
+                  maxLength={10}
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="5512345678"
+                />
+                {form.tutorTelefono && form.tutorTelefono.length !== 10 && (
+                  <p className="text-xs text-destructive mt-1">El teléfono debe tener exactamente 10 dígitos</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Correo electrónico</label>
+                <input
+                  value={form.tutorEmail}
+                  onChange={(e) => set("tutorEmail", e.target.value.trim())}
+                  type="email"
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="correo@ejemplo.com"
+                />
+                {form.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail) && (
+                  <p className="text-xs text-destructive mt-1">
+                    Ingrese un correo electrónico válido (debe contener @ y al menos un punto)
+                  </p>
+                )}
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Grupo (3-4 dígitos)</label>
-              <input
-                value={form.grupo}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-                  set("grupo", v);
-                }}
-                inputMode="numeric"
-                maxLength={4}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Ej: 123" />
-              
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Tutor Info */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Datos del Tutor</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Nombre completo del tutor</label>
-              <input
-                value={form.tutorNombre}
-                onChange={(e) => set("tutorNombre", e.target.value)}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Nombre del tutor" />
-              
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Teléfono de contacto (10 dígitos)</label>
-              <input
-                value={form.tutorTelefono}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
-                  set("tutorTelefono", v);
-                }}
-                type="tel"
-                inputMode="tel"
-                maxLength={10}
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="5512345678" />
-              {form.tutorTelefono && form.tutorTelefono.length !== 10 && (
-                <p className="text-xs text-destructive mt-1">El teléfono debe tener exactamente 10 dígitos</p>
-              )}
-              
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Correo electrónico</label>
-              <input
-                value={form.tutorEmail}
-                onChange={(e) => set("tutorEmail", e.target.value.trim())}
-                type="email"
-                className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="correo@ejemplo.com" />
-              {form.tutorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tutorEmail) && (
-                <p className="text-xs text-destructive mt-1">Ingrese un correo electrónico válido (debe contener @ y al menos un punto)</p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Contribution */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Aportación</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Aportación actual</label>
-              <div className="relative">
-                <select
-                  value={form.aportacionActual}
-                  onChange={(e) => set("aportacionActual", Number(e.target.value))}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  
-                  <option value={0}>Seleccione...</option>
-                  {APORTACIONES.map((a) =>
-                  <option key={a.value} value={a.value}>
-                      {a.label}
-                    </option>
-                  )}
-                </select>
-                <ChevronDown
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                
+          {/* Contribution */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Aportación</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Aportación actual</label>
+                <div className="relative">
+                  <select
+                    value={form.aportacionActual}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, aportacionActual: Number(e.target.value), aportacionPropuesta: 0 }))
+                    }
+                    className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value={0}>Seleccione...</option>
+                    {APORTACIONES.map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Aportación solicitada</label>
+                <div className="relative">
+                  <select
+                    value={form.aportacionPropuesta}
+                    onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
+                    className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value={0}>Seleccione...</option>
+                    {APORTACIONES.filter(
+                      (a) =>
+                        !form.aportacionActual ||
+                        a.value < form.aportacionActual ||
+                        (form.aportacionActual === 300 && a.value === 300),
+                    ).map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Aportación solicitada</label>
-              <div className="relative">
-                <select
-                  value={form.aportacionPropuesta}
-                  onChange={(e) => set("aportacionPropuesta", Number(e.target.value))}
-                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                  
-                  <option value={0}>Seleccione...</option>
-                  {APORTACIONES.filter((a) => a.value < form.aportacionActual || !form.aportacionActual).map((a) =>
-                  <option key={a.value} value={a.value}>
-                      {a.label}
-                    </option>
-                  )}
-                </select>
-                <ChevronDown
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Adeudo */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Adeudo</h3>
-          <div className="flex gap-3 mb-4">
-            {[
-            { v: false, l: "No" },
-            { v: true, l: "Sí" }].
-            map((opt) =>
-            <button
-              key={String(opt.v)}
-              onClick={() => {
-                set("tieneAdeudo", opt.v);
-                if (!opt.v) set("montoAdeudo", 0);
-              }}
-              className={`touch-target flex-1 rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
-                  ${form.tieneAdeudo === opt.v ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}>
-              
-                {opt.l}
-              </button>
-            )}
-          </div>
-          {form.tieneAdeudo &&
-          <div>
-              <label className="block text-sm font-semibold text-foreground mb-1">Monto del adeudo (MXN)</label>
-              <input
-              value={form.montoAdeudo || ""}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9.]/g, "");
-                // Max 6 digits before decimal, 2 after
-                if (/^\d{0,6}(\.\d{0,2})?$/.test(raw)) {
-                  set("montoAdeudo", raw === "" ? 0 : Number(raw));
-                }
-              }}
-              inputMode="decimal"
-              className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="$0.00" />
-            
-            </div>
-          }
-        </section>
-
-        {/* Reason */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Motivo de la Solicitud</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {MOTIVOS.map((m) => {
-              const active = form.motivo === m.value;
-              return (
+          {/* Adeudo */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Adeudo</h3>
+            <div className="flex gap-3 mb-4">
+              {[
+                { v: false, l: "No" },
+                { v: true, l: "Sí" },
+              ].map((opt) => (
                 <button
-                  key={m.value}
-                  onClick={() => set("motivo", m.value)}
-                  className={`touch-target rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
-                    ${active ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}>
-                  
-                  {m.label}
-                </button>);
-
-            })}
-          </div>
-          <label className="block text-sm font-semibold text-foreground mb-1">Detalle del motivo</label>
-          <textarea
-            value={form.motivoDetalle}
-            onChange={(e) => set("motivoDetalle", e.target.value)}
-            rows={3}
-            placeholder="Describa brevemente su situación..."
-            className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
-          
-        </section>
-
-        {/* Escrito Libre */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
-          <p className="text-sm text-muted-foreground mb-3">Debe estar firmado por el tutor.</p>
-          <input
-            ref={escritoRef}
-            type="file"
-            accept={ACCEPT_ATTR}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                const f = e.target.files[0];
-                const err = validateFile(f);
-                if (err) { setEscritoError(err); setEscritoLibre(null); }
-                else { setEscritoError(""); setEscritoLibre(f); }
-              }
-              e.target.value = "";
-            }} />
-          
-          {escritoLibre ?
-          <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-              {escritoStatus === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
-              {escritoStatus === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
-              {escritoStatus === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
-              {escritoStatus === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
-              <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
-              {escritoError && <span className="text-xs text-destructive">{escritoError}</span>}
-              <button onClick={() => { setEscritoLibre(null); setEscritoStatus("pending"); setEscritoError(""); }} className="text-destructive">
-                <X size={20} />
-              </button>
-            </div> :
-
-          <>
-            {escritoError && !escritoLibre && (
-              <p className="text-xs text-destructive mb-3">{escritoError}</p>
+                  key={String(opt.v)}
+                  onClick={() => {
+                    set("tieneAdeudo", opt.v);
+                    if (!opt.v) set("montoAdeudo", 0);
+                  }}
+                  className={`touch-target flex-1 rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
+                  ${form.tieneAdeudo === opt.v ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}
+                >
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+            {form.tieneAdeudo && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">Monto del adeudo (MXN)</label>
+                <input
+                  value={form.montoAdeudo || ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9.]/g, "");
+                    // Max 6 digits before decimal, 2 after
+                    if (/^\d{0,6}(\.\d{0,2})?$/.test(raw)) {
+                      set("montoAdeudo", raw === "" ? 0 : Number(raw));
+                    }
+                  }}
+                  inputMode="decimal"
+                  className="touch-target w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="$0.00"
+                />
+              </div>
             )}
+          </section>
+
+          {/* Reason */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Motivo de la Solicitud</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {MOTIVOS.map((m) => {
+                const active = form.motivo === m.value;
+                return (
+                  <button
+                    key={m.value}
+                    onClick={() => set("motivo", m.value)}
+                    className={`touch-target rounded-xl border-2 p-4 text-center font-heading font-medium transition-all
+                    ${active ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:border-primary/40"}`}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+            <label className="block text-sm font-semibold text-foreground mb-1">Detalle del motivo</label>
+            <textarea
+              value={form.motivoDetalle}
+              onChange={(e) => set("motivoDetalle", e.target.value)}
+              rows={3}
+              placeholder="Describa brevemente su situación..."
+              className="w-full rounded-lg border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+          </section>
+
+          {/* Escrito Libre */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">Escrito Libre</h3>
+            <p className="text-sm text-muted-foreground mb-3">Debe estar firmado por el tutor.</p>
+            <input
+              ref={escritoRef}
+              type="file"
+              accept={ACCEPT_ATTR}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  const f = e.target.files[0];
+                  const err = validateFile(f);
+                  if (err) {
+                    setEscritoError(err);
+                    setEscritoLibre(null);
+                  } else {
+                    setEscritoError("");
+                    setEscritoLibre(f);
+                  }
+                }
+                e.target.value = "";
+              }}
+            />
+
+            {escritoLibre ? (
+              <div className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
+                {escritoStatus === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+                {escritoStatus === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+                {escritoStatus === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+                {escritoStatus === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
+                <span className="text-foreground flex-1 truncate">{escritoLibre.name}</span>
+                {escritoError && <span className="text-xs text-destructive">{escritoError}</span>}
+                <button
+                  onClick={() => {
+                    setEscritoLibre(null);
+                    setEscritoStatus("pending");
+                    setEscritoError("");
+                  }}
+                  className="text-destructive"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            ) : (
+              <>
+                {escritoError && !escritoLibre && <p className="text-xs text-destructive mb-3">{escritoError}</p>}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      escritoRef.current?.setAttribute("capture", "environment");
+                      escritoRef.current?.click();
+                    }}
+                    className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors"
+                  >
+                    <Camera size={36} className="text-muted-foreground mb-2" />
+                    <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
+                  </button>
+                  <button
+                    onClick={() => {
+                      escritoRef.current?.removeAttribute("capture");
+                      escritoRef.current?.click();
+                    }}
+                    className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors"
+                  >
+                    <FileUp size={36} className="text-muted-foreground mb-2" />
+                    <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+
+          {/* Documents */}
+          <section className="bg-card rounded-xl border p-6 shadow-sm">
+            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+              Documentos Comprobatorios
+              {documentos.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({documentos.length} archivo{documentos.length !== 1 ? "s" : ""})
+                </span>
+              )}
+            </h3>
+            <input ref={docRef} type="file" accept={ACCEPT_ATTR} multiple className="hidden" onChange={handleDocAdd} />
+
             <div className="flex gap-3">
               <button
-              onClick={() => {
-                escritoRef.current?.setAttribute("capture", "environment");
-                escritoRef.current?.click();
-              }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-              
+                onClick={() => {
+                  const input = docRef.current;
+                  if (!input) return;
+                  input.removeAttribute("multiple");
+                  input.setAttribute("capture", "environment");
+                  input.click();
+                  setTimeout(() => {
+                    input.removeAttribute("capture");
+                    input.setAttribute("multiple", "true");
+                  }, 500);
+                }}
+                className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer"
+              >
                 <Camera size={36} className="text-muted-foreground mb-2" />
                 <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
               </button>
               <button
-              onClick={() => {
-                escritoRef.current?.removeAttribute("capture");
-                escritoRef.current?.click();
-              }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors">
-              
-                <FileUp size={36} className="text-muted-foreground mb-2" />
-                <p className="font-heading font-semibold text-foreground">Cargar Archivo</p>
-              </button>
-            </div>
-          </>
-          }
-        </section>
-
-        {/* Documents */}
-        <section className="bg-card rounded-xl border p-6 shadow-sm">
-          <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
-            Documentos Comprobatorios
-            {documentos.length > 0 &&
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({documentos.length} archivo{documentos.length !== 1 ? "s" : ""})
-              </span>
-            }
-          </h3>
-          <input
-            ref={docRef}
-            type="file"
-            accept={ACCEPT_ATTR}
-            multiple
-            className="hidden"
-            onChange={handleDocAdd} />
-          
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                const input = docRef.current;
-                if (!input) return;
-                input.removeAttribute("multiple");
-                input.setAttribute("capture", "environment");
-                input.click();
-                setTimeout(() => {
+                onClick={() => {
+                  const input = docRef.current;
+                  if (!input) return;
                   input.removeAttribute("capture");
                   input.setAttribute("multiple", "true");
-                }, 500);
-              }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
-              
-              <Camera size={36} className="text-muted-foreground mb-2" />
-              <p className="font-heading font-semibold text-foreground">Tomar Foto</p>
-            </button>
-            <button
-              onClick={() => {
-                const input = docRef.current;
-                if (!input) return;
-                input.removeAttribute("capture");
-                input.setAttribute("multiple", "true");
-                input.click();
-              }}
-              className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer">
-              
-              <FileUp size={36} className="text-muted-foreground mb-2" />
-              <p className="font-heading font-semibold text-foreground">Cargar Archivos</p>
-              <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
-            </button>
-          </div>
-          {docError && (
-            <p className="text-xs text-destructive mt-2">{docError}</p>
-          )}
-          {documentos.length > 0 &&
-          <div className="mt-4 space-y-2">
-              {documentos.map((d, i) =>
-            <div key={`${d.file.name}-${d.file.size}-${i}`} className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3">
-                  {d.status === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
-                  {d.status === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
-                  {d.status === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
-                  {d.status === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
-                  <span className="text-foreground flex-1 truncate text-sm">{d.file.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{(d.file.size / 1024).toFixed(0)} KB</span>
-                  {d.error && <span className="text-xs text-destructive shrink-0">{d.error}</span>}
-                  <button
-                onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))}
-                className="text-destructive shrink-0">
-                
-                    <X size={20} />
-                  </button>
-                </div>
-            )}
+                  input.click();
+                }}
+                className="flex-1 border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/40 transition-colors cursor-pointer"
+              >
+                <FileUp size={36} className="text-muted-foreground mb-2" />
+                <p className="font-heading font-semibold text-foreground">Cargar Archivos</p>
+                <p className="text-sm text-muted-foreground mt-1">Puede seleccionar varios</p>
+              </button>
             </div>
-          }
-        </section>
+            {docError && <p className="text-xs text-destructive mt-2">{docError}</p>}
+            {documentos.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {documentos.map((d, i) => (
+                  <div
+                    key={`${d.file.name}-${d.file.size}-${i}`}
+                    className="flex items-center gap-3 bg-muted rounded-lg px-4 py-3"
+                  >
+                    {d.status === "uploading" && <Loader2 size={16} className="text-primary animate-spin shrink-0" />}
+                    {d.status === "done" && <CheckCircle size={16} className="text-success shrink-0" />}
+                    {d.status === "error" && <AlertCircle size={16} className="text-destructive shrink-0" />}
+                    {d.status === "pending" && <Upload size={16} className="text-muted-foreground shrink-0" />}
+                    <span className="text-foreground flex-1 truncate text-sm">{d.file.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{(d.file.size / 1024).toFixed(0)} KB</span>
+                    {d.error && <span className="text-xs text-destructive shrink-0">{d.error}</span>}
+                    <button
+                      onClick={() => setDocumentos((prev) => prev.filter((_, j) => j !== i))}
+                      className="text-destructive shrink-0"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </fieldset>
 
-        {submitError &&
-        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
+        {submitError && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm font-semibold">
             {submitError}
           </div>
-        }
+        )}
 
         {pendingSolId ? (
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 space-y-3">
@@ -800,29 +825,45 @@ export default function NuevaSolicitudPage() {
             <button
               onClick={handleRetry}
               disabled={submitting}
-              className="touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {submitting ? "Subiendo..." : "Reintentar archivos"}
+            </button>
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Su solicitud ya quedó registrada. Si sale ahora, los archivos pendientes no se subirán y deberá entregarlos por otro medio. ¿Salir?",
+                  )
+                )
+                  resetForm();
+              }}
+              disabled={submitting}
+              className="touch-target w-full py-3 rounded-xl border-2 border-border text-foreground font-heading font-semibold hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Salir sin subir los archivos pendientes
             </button>
           </div>
         ) : (
-        <>
-        {/* Submit */}
-        <button
-          onClick={handleSubmit}
-          disabled={!canSubmit || submitting}
-          className={`touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg
-            ${canSubmit && !submitting ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}>
+          <>
+            {/* Submit */}
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || submitting}
+              className={`touch-target w-full py-4 rounded-xl font-heading font-bold text-lg transition-all shadow-lg
+            ${canSubmit && !submitting ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}
+            >
+              {submitting ? "Enviando..." : "Enviar Solicitud"}
+            </button>
 
-          {submitting ? "Enviando..." : "Enviar Solicitud"}
-        </button>
-
-        <button
-          onClick={handleClear}
-          disabled={submitting}
-          className="touch-target w-full py-3 rounded-xl border-2 border-border text-foreground font-heading font-semibold hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          Limpiar formulario
-        </button>
-        </>
+            <button
+              onClick={handleClear}
+              disabled={submitting}
+              className="touch-target w-full py-3 rounded-xl border-2 border-border text-foreground font-heading font-semibold hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Limpiar formulario
+            </button>
+          </>
         )}
       </div>
 
@@ -831,20 +872,27 @@ export default function NuevaSolicitudPage() {
           <div className="bg-card rounded-2xl p-6 max-w-sm w-full text-center shadow-xl">
             <AlertCircle size={40} className="text-destructive mx-auto mb-3" />
             <h3 className="font-heading font-bold text-lg text-foreground mb-2">¿Sigues llenando el formulario?</h3>
-            <p className="text-muted-foreground mb-4">Por inactividad, el formulario se reiniciará en {180 - idleSeconds} segundos.</p>
+            <p className="text-muted-foreground mb-4">
+              Por inactividad, el formulario se reiniciará en {180 - idleSeconds} segundos.
+            </p>
             <button
-              onClick={() => { idleRef.current = 0; setIdleSeconds(0); setShowIdleWarning(false); }}
-              className="touch-target w-full py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90">
+              onClick={() => {
+                idleRef.current = 0;
+                setIdleSeconds(0);
+                setShowIdleWarning(false);
+              }}
+              className="touch-target w-full py-3 rounded-xl bg-primary text-primary-foreground font-heading font-semibold hover:bg-primary/90"
+            >
               Seguir llenando
             </button>
           </div>
         </div>
       )}
-    </PublicLayout>);
-
+    </PublicLayout>
+  );
 }
 
-function PublicLayout({ children }: {children: React.ReactNode;}) {
+function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between shadow-md">
@@ -852,8 +900,9 @@ function PublicLayout({ children }: {children: React.ReactNode;}) {
           <img
             alt="Fundación Azteca / Plantel Azteca"
             className="h-10 w-auto"
-            src="/lovable-uploads/d5f2960e-fcb4-4f84-8f75-87b3eb1c6074.png" />
-          
+            src="/lovable-uploads/d5f2960e-fcb4-4f84-8f75-87b3eb1c6074.png"
+          />
+
           <div>
             <h1 className="font-heading text-lg font-bold leading-tight">Plantel Azteca CDMX</h1>
             <p className="text-sm opacity-80">Gestión de Aportaciones</p>
@@ -861,8 +910,8 @@ function PublicLayout({ children }: {children: React.ReactNode;}) {
         </div>
         <a
           href="/login"
-          className="text-sm font-heading font-semibold text-primary-foreground/80 hover:text-primary-foreground underline">
-          
+          className="text-sm font-heading font-semibold text-primary-foreground/80 hover:text-primary-foreground underline"
+        >
           Personal
         </a>
       </header>
@@ -870,6 +919,6 @@ function PublicLayout({ children }: {children: React.ReactNode;}) {
       <footer className="bg-muted text-muted-foreground text-center text-xs py-3 font-body">
         © 2026 Fundación Azteca de Grupo Salinas — Plantel Azteca CDMX
       </footer>
-    </div>);
-
+    </div>
+  );
 }
