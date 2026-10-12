@@ -8,6 +8,8 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;
+  /** true para master_tic: puede actuar en todas las vistas (revisor, enlace, dirección, comité) */
+  isMaster: boolean;
   fullName: string;
   status: "active" | "pending";
 }
@@ -55,6 +57,7 @@ async function buildUser(su: SupaUser): Promise<User | null> {
     id: su.id,
     email: su.email ?? "",
     role: appRole,
+    isMaster: profile.role === "master_tic",
     fullName: profile.full_name ?? "",
     status: profile.status ?? "pending",
   };
@@ -65,25 +68,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = centralSupabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const u = await buildUser(session.user);
-        setUser(u);
-      } else {
-        setUser(null);
+    let active = true;
+
+    const sync = async (session: { user: SupaUser } | null) => {
+      try {
+        const u = session?.user ? await buildUser(session.user) : null;
+        if (active) setUser(u);
+      } catch (e) {
+        console.error("Error cargando el perfil:", e);
+        if (active) setUser(null);
       }
-      setLoading(false);
+      if (active) setLoading(false);
+    };
+
+    // IMPORTANTE: no hacer await de llamadas a Supabase dentro del callback de
+    // onAuthStateChange (bloquea el lock de la sesión y deja la página colgada o
+    // mandando al login al recargar). Se difiere con setTimeout.
+    const {
+      data: { subscription },
+    } = centralSupabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => {
+        sync(session);
+      }, 0);
     });
 
-    centralSupabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const u = await buildUser(session.user);
-        setUser(u);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<string | null> => {
@@ -101,9 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user && user.status === "active";
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated }}>{children}</AuthContext.Provider>
   );
 }
 
